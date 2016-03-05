@@ -8,23 +8,12 @@
         android:layout_width="match_parent"
         android:id="@+id/linearLayout1"
         android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <Button
-            android:text="Discover"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/atn_direct_discover"
-            android:icon="@drawable/ic_action_discover"
-            android:title="@string/discover_peers_button"
-            android:layout_gravity="center_horizontal"
-            android:showAsAction="ifRoom|withText" />
-
+        android:orientation="horizontal">
         <fragment
             class="com.example.niol.faceswap.DeviceListFragment"
             android:id="@+id/frag_list"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/phone_list_height">
+            android:layout_width="@dimen/phone_list_height"
+            android:layout_height="match_parent">
             <!-- Preview: layout=@layout/row_devices -->
         </fragment>
         <fragment
