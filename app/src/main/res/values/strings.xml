@@ -4,4 +4,5 @@
     <string name="take_picture">take_picture</string>
     <string name="picture_face_swap">picture_face_swap</string>
     <string name="transfer_picture">transfer_picture</string>
+    <string name="low_storage_error">low storage error</string>
 </resources>

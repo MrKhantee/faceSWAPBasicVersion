@@ -22,9 +22,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 /**
- * Created by niol on 2016/3/3.
+ * Created by niol on 2016/2/14.
  */
-public class ModifiedFaceView extends View {
+public class ModifiedFaceView extends View implements Runnable{
     private Bitmap mBitmap, mBitmap2,finalBitmap;
     private SparseArray<Face> mFaces, mFaces2;
 
@@ -35,12 +35,7 @@ public class ModifiedFaceView extends View {
     /**
      * Sets the bitmap background and the associated face detections.
      */
-    void setContent(Bitmap bitmap, SparseArray<Face> faces,Bitmap bitmap2,SparseArray<Face> faces2) {
-        mBitmap = bitmap;
-        mFaces = faces;
-
-        mBitmap2 = bitmap2;
-        mFaces2 = faces2;
+    void setContent() {
         invalidate();
     }
     float leftEyeX(SparseArray<Face> faces) {
@@ -174,34 +169,30 @@ public class ModifiedFaceView extends View {
             if(isColorDifferent(bitmap,rightEyeBorder,y,leftCheekX,leftCheekY))
                 bitmap.setPixel(rightEyeBorder,y, bitmap.getPixel(x - 1,y - 1));
         }*/
-        for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
+
+       for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
             for(int y = topEyeBorder + 1;y < downEyeBorder; y++) {
                 if (isColorDifferent(bitmap, x, y, leftCheekX, leftCheekY)) {
+
+                    //bitmap.setPixel(x, y, leftCheekColor);
                     bitmap.setPixel(x, y, bitmap.getPixel(x ,y - 1));
                 }
             }
         }
-        for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
+        /*for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
             for(int y = topEyeBorder + 1;y < downEyeBorder; y++) {
                 topColor = bitmap.getPixel(x ,y - 1);
                 downColor = bitmap.getPixel(x ,y + 1);
                 leftColor = bitmap.getPixel(x - 1,y);
                 rightColor = bitmap.getPixel(x + 1,y);
                 leftDistance = topDistance = rightDistance = downDistance = 1;
-                    /*topColor = bitmap.getPixel(x,topEyeBorder);
-                    downColor = bitmap.getPixel(x,downEyeBorder);
-                    leftColor = bitmap.getPixel(leftEyeBorder,y);
-                    rightColor = bitmap.getPixel(rightEyeBorder,y);
-                    topDistance = y - topEyeBorder;
-                    downDistance = downEyeBorder - y;
-                    leftDistance = x - leftEyeBorder;
-                    rightDistance = rightEyeBorder - x;*/
+
                 averageColor = averageColor(leftColor,topColor,rightColor,downColor,leftDistance,topDistance,rightDistance,downDistance);
                 //averageColor = bitmap.getPixel(leftCheekX,leftCheekY);
                 bitmap.setPixel(x,y,averageColor);
                 //}
             }
-        }
+        }*/
     }
     void extractEyes(Bitmap bitmap, SparseArray<Face> faces,Bitmap bitmap2, SparseArray<Face> faces2){
         //extract face from bitmap and put the face on the bitmap2
@@ -337,16 +328,16 @@ public class ModifiedFaceView extends View {
         //Rect destBounds2 = new Rect(0, 0, (int)(imageWidth2 * scale / 2), (int)(imageHeight2 * scale / 2));
         //Rect destBounds = new Rect(0, 0, (int)(mFaces.valueAt(0).getLandmarks().get(0).getPosition().x * scale), (int)(mFaces.valueAt(0).getLandmarks().get(0).getPosition().y * scale));
 
-        Bitmap mutableBitmap = ModifiedFaceView.convertToMutable(Bitmap.createBitmap(mBitmap2));
+       /* Bitmap mutableBitmap = ModifiedFaceView.convertToMutable(Bitmap.createBitmap(mBitmap2));
         deleteFace(mutableBitmap,mFaces2);
-        extractEyes(mBitmap,mFaces,mutableBitmap,mFaces2);
+        extractEyes(mBitmap,mFaces,mutableBitmap,mFaces2);*/
         Bitmap resizedbitmap = Bitmap.createBitmap(mBitmap, (int)leftEyeBorder(mFaces), (int)topEyeBorder(mFaces) , (int)eyeWidth(mFaces),(int)eyeHeight(mFaces));
         //Bitmap resizedbitmap=Bitmap.createBitmap(mBitmap, (int)leftBorder,(int)upperborder, (int)rightBorder,(int)lowerborder);
         Rect destBounds = new Rect(0, 0, (int)(imageWidth2 * scale2 ), (int)(imageHeight2 * scale2 ));
         Rect destBounds2 = new Rect((int)(leftEyeBorder(mFaces2) * scale2), (int)(topEyeBorder(mFaces2) * scale2), (int)((leftEyeBorder(mFaces2) + eyeWidth(mFaces2)) * scale2), (int)((topEyeBorder(mFaces2) + eyeHeight(mFaces2)) * scale2));
 
         //canvas.drawBitmap(resizedbitmap,0,0,null);
-        canvas.drawBitmap(mutableBitmap, null, destBounds, null);
+        canvas.drawBitmap(finalBitmap, null, destBounds, null);
         //canvas.drawBitmap(resizedbitmap,null,destBounds2,null);
         //canvas.drawBitmap(mBitmap2, null, destBounds, null);
         return scale;
@@ -375,7 +366,23 @@ public class ModifiedFaceView extends View {
             }
         }
     }
-}
+    public void getPhotosAndFaces(Bitmap bitmap, SparseArray<Face> faces,Bitmap bitmap2,SparseArray<Face> faces2) {
+        mBitmap = bitmap;
+        mFaces = faces;
 
+        mBitmap2 = bitmap2;
+        mFaces2 = faces2;
+    }
+
+    @Override
+    public void run() {
+        //finalBitmap = Bitmap.createBitmap(mBitmap2);
+        //finalBitmap = ModifiedFaceView.convertToMutable(finalBitmap);
+        finalBitmap = mBitmap2.copy(mBitmap2.getConfig(),true);
+        deleteFace(finalBitmap,mFaces2);
+
+        extractEyes(mBitmap,mFaces,finalBitmap,mFaces2);
+    }
+}
 
 
