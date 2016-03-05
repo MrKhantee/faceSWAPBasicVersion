@@ -5,13 +5,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -45,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         button_transfer_picture.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Perform action on click
+                sendPicture(v);
             }
         });
         button_face_swap.setOnClickListener(new View.OnClickListener() {
@@ -96,10 +92,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
     public void sendPicture(View view) {
-        /*Intent intent = new Intent(this, sendPictureActivity.class);
-        //maybe record the picture now?
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        startActivity(intent);*/
+        Intent intent = new Intent(this, WiFiDirectActivity.class);
+//        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
 }
