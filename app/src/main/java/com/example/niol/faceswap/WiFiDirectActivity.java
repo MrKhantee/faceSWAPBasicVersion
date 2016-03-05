@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -30,14 +31,18 @@ import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.Toast;
 
 import com.example.niol.faceswap.DeviceListFragment.DeviceActionListener;
+
+import java.util.ArrayList;
 
 
 /**
@@ -57,6 +62,12 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
     private final IntentFilter intentFilter = new IntentFilter();
     private Channel channel;
     private BroadcastReceiver receiver = null;
+
+    private Utils utils;
+    private ArrayList<String> imagePaths = new ArrayList<String>();
+    private GridViewImageAdapter adapter;
+    private GridView gridView;
+    private int columnWidth;
 
     /**
      * @param isWifiP2pEnabled the isWifiP2pEnabled to set
@@ -107,6 +118,39 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
                 });
             }
         });
+
+        gridView = (GridView) findViewById(R.id.gridView);
+
+        utils = new Utils(this);
+
+        // Initilizing Grid View
+        InitilizeGridLayout();
+
+        // loading all image paths from SD card
+        imagePaths = utils.getFilePaths();
+
+        // Gridview adapter
+        adapter = new GridViewImageAdapter(this, imagePaths,
+                columnWidth);
+
+        // setting grid view adapter
+        gridView.setAdapter(adapter);
+    }
+
+    private void InitilizeGridLayout() {
+        Resources r = getResources();
+        float padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                AppConstant.GRID_PADDING, r.getDisplayMetrics());
+
+        columnWidth = (int) ((utils.getScreenWidth() - ((AppConstant.NUM_OF_COLUMNS + 1) * padding)) / AppConstant.NUM_OF_COLUMNS);
+
+        gridView.setNumColumns(AppConstant.NUM_OF_COLUMNS);
+        gridView.setColumnWidth(columnWidth);
+        gridView.setStretchMode(GridView.NO_STRETCH);
+        gridView.setPadding((int) padding, (int) padding, (int) padding,
+                (int) padding);
+        gridView.setHorizontalSpacing((int) padding);
+        gridView.setVerticalSpacing((int) padding);
     }
 
     /** register the BroadcastReceiver with the intent values to be matched */

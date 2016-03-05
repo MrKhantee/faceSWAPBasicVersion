@@ -31,8 +31,15 @@
             class="com.example.niol.faceswap.DeviceDetailFragment"
             android:id="@+id/frag_detail"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="185dp">
             <!-- Preview: layout=@layout/device_detail -->
         </fragment>
+
+        <GridView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/gridView"
+            android:layout_gravity="center_horizontal" />
+
     </LinearLayout>
 </LinearLayout>
