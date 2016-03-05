@@ -20,6 +20,8 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
+import java.io.IOException;
+
 public class FaceSwapActivity extends AppCompatActivity {
     private static final String TAG = "faceSwapActivity";
     static final int PICK_FACE_IMAGE_REQUEST = 1;
@@ -76,13 +78,14 @@ public class FaceSwapActivity extends AppCompatActivity {
         Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
         getIntent.setType("image/*");
 
-        Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        pickIntent.setType("image/*");
+        //Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        //pickIntent.setType("image/*");
 
-        Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+        //Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
+        //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
 
-        startActivityForResult(chooserIntent, imageRequest);
+        //startActivityForResult(chooserIntent, imageRequest);
+        startActivityForResult(getIntent, imageRequest);
     }
     private void modifyPhoto(){
         if(facephoto!=null && facephoto2 != null && faces.size() != 0 && faces2.size() != 0) {
@@ -96,22 +99,22 @@ public class FaceSwapActivity extends AppCompatActivity {
 
         switch(requestCode) {
             case PICK_FACE_IMAGE_REQUEST:
-                if(resultCode == RESULT_OK){
-                    Uri selectedImage = imageReturnedIntent.getData();
-                    String[] filePathColumn = {MediaStore.Images.Media.DATA};
+                if (resultCode == RESULT_OK && imageReturnedIntent != null && imageReturnedIntent.getData() != null) {
 
-                    Cursor cursor = getContentResolver().query(
-                            selectedImage, filePathColumn, null, null, null);
-                    cursor.moveToFirst();
-                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                    String filePath = cursor.getString(columnIndex);
-                    cursor.close();
-                    facephoto = BitmapFactory.decodeFile(filePath);
-                    FaceView faceView = (FaceView) findViewById(R.id.faceView);
-                    Frame frame = new Frame.Builder().setBitmap(facephoto).build();
-                    faces = safeDetector.detect(frame);
-                    faceView.setContent(facephoto, faces);
-                    //safeDetector.release();
+                    Uri uri = imageReturnedIntent.getData();
+                    getContentResolver();
+                    try {
+                        facephoto = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
+                        // Log.d(TAG, String.valueOf(bitmap));
+
+                        FaceView faceView = (FaceView) findViewById(R.id.faceView);
+                        Frame frame = new Frame.Builder().setBitmap(facephoto).build();
+                        faces = safeDetector.detect(frame);
+                        faceView.setContent(facephoto, faces);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
                 if (!safeDetector.isOperational()) {
                     // Note: The first time that an app using face API is installed on a device, GMS will
@@ -137,22 +140,22 @@ public class FaceSwapActivity extends AppCompatActivity {
                 modifyPhoto();
                 break;
             case PICK_FACE_IMAGE_2_REQUEST:
-                if(resultCode == RESULT_OK){
-                    Uri selectedImage = imageReturnedIntent.getData();
-                    String[] filePathColumn = {MediaStore.Images.Media.DATA};
+                if (resultCode == RESULT_OK && imageReturnedIntent != null && imageReturnedIntent.getData() != null) {
 
-                    Cursor cursor = getContentResolver().query(
-                            selectedImage, filePathColumn, null, null, null);
-                    cursor.moveToFirst();
-                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                    String filePath = cursor.getString(columnIndex);
-                    cursor.close();
-                    facephoto2 = BitmapFactory.decodeFile(filePath);
-                    FaceView faceView2 = (FaceView) findViewById(R.id.faceView2);
-                    Frame frame2 = new Frame.Builder().setBitmap(facephoto2).build();
-                    faces2 = safeDetector.detect(frame2);
-                    faceView2.setContent(facephoto2,faces2);
-                    //safeDetector.release();
+                    Uri uri = imageReturnedIntent.getData();
+                    getContentResolver();
+                    try {
+                        facephoto2 = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
+                        // Log.d(TAG, String.valueOf(bitmap));
+
+                        FaceView faceView = (FaceView) findViewById(R.id.faceView2);
+                        Frame frame = new Frame.Builder().setBitmap(facephoto2).build();
+                        faces2 = safeDetector.detect(frame);
+                        faceView.setContent(facephoto2, faces2);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
                 if (!safeDetector.isOperational()) {
                     // Note: The first time that an app using face API is installed on a device, GMS will
