@@ -33,7 +33,7 @@ public class ModifiedFaceView extends View implements Runnable{
     private Bitmap mBitmap, mBitmap2,finalBitmap;
     private SparseArray<Face> mFaces, mFaces2;
 
-    private GestureDetector gestureDetector;
+//    private GestureDetector gestureDetector;
     private ScaleGestureDetector mScaleDetector;
     private float mScaleFactor = 1.f;
 
@@ -45,30 +45,27 @@ public class ModifiedFaceView extends View implements Runnable{
     private RectF mCurrentViewport = new RectF(AXIS_X_MIN, AXIS_Y_MIN, AXIS_X_MAX, AXIS_Y_MAX);
     private Rect mContentRect = new Rect();
 
+    /****************************************/
+    // for zooming and dragging             //
     private static float MIN_ZOOM = 1f;
     private static float MAX_ZOOM = 5f;
-
     private float scaleFactor = 1.f;
-
     private static int NONE = 0;
     private static int DRAG = 1;
     private static int ZOOM = 2;
-
     private int mode;
-
-    //These two variables keep track of the X and Y coordinate of the finger when it first
-    //touches the screen
     private float startX = 0f;
     private float startY = 0f;
-
-    //These two variables keep track of the amount we need to translate the canvas along the X
-    //and the Y coordinate
     private float translateX = 0f;
     private float translateY = 0f;
+    private float previousTranslateX = 0f;
+    private float previousTranslateY = 0f;
+    private boolean dragged = true;
+    /****************************************/
 
     public ModifiedFaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        gestureDetector = new GestureDetector(context, mGestureListener);
+//        gestureDetector = new GestureDetector(context, mGestureListener);
         mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
 
@@ -84,23 +81,35 @@ public class ModifiedFaceView extends View implements Runnable{
             case MotionEvent.ACTION_MOVE:
                 translateX = ev.getX() - startX;
                 translateY = ev.getY() - startY;
+
+//                double distance = Math.sqrt(Math.pow(ev.getX() - (startX + previousTranslateX), 2) + Math.pow(ev.getY() - (startY + previousTranslateY), 2));
+//
+//                if(distance > 0) {
+//                    dragged = true;
+//                }
+
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
                 mode = ZOOM;
                 break;
             case MotionEvent.ACTION_UP:
                 mode = NONE;
+//                dragged = false;
+                previousTranslateX = translateX;
+                previousTranslateY = translateY;
                 break;
             case MotionEvent.ACTION_POINTER_UP:
                 mode = DRAG;
+                previousTranslateX = translateX;
+                previousTranslateY = translateY;
                 break;
         }
-        gestureDetector.onTouchEvent(ev);
+//        gestureDetector.onTouchEvent(ev);
         mScaleDetector.onTouchEvent(ev);
 
         //The only time we want to re-draw the canvas is if we are panning (which happens when the mode is
         //DRAG and the zoom factor is not equal to 1) or if we're zooming
-        if ((mode == DRAG && scaleFactor != 1f) || mode == ZOOM) {
+        if ((mode == DRAG && scaleFactor != 1f /*&& dragged*/) || mode == ZOOM) {
             invalidate();
         }
 
@@ -289,6 +298,22 @@ public class ModifiedFaceView extends View implements Runnable{
 
         canvas.save();
         canvas.scale(mScaleFactor, mScaleFactor);
+
+//        if((translateX * -1) < 0) {
+//            translateX = 0;
+//        } else if ((translateX * -1) > (scaleFactor - 1) * canvas.getWidth()) {
+//            translateX = (1 - scaleFactor) * canvas.getWidth();
+//        }
+//
+//        if(translateY * -1 < 0) {
+//            translateY = 0;
+//        } else if((translateY * -1) > (scaleFactor - 1) * canvas.getHeight()) {
+//            translateY = (1 - scaleFactor) * canvas.getHeight();
+//        }
+
+        translateX = (translateX * -1) < 0 ? 0 : translateX;
+        translateY = (translateY * -1) < 0 ? 0 : translateY;
+
         canvas.translate(translateX / scaleFactor, translateY / scaleFactor);
         //canvas.clipRect(mContentRect);
 
