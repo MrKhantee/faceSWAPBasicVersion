@@ -2,13 +2,11 @@ package com.example.niol.faceswap;
 
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
@@ -30,6 +28,7 @@ public class FaceSwapActivity extends AppCompatActivity {
     private Detector<Face> safeDetector;
     private FaceDetector detector;
     private SparseArray<Face> faces, faces2;
+    private FaceView faceView1, faceView2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,8 +43,29 @@ public class FaceSwapActivity extends AppCompatActivity {
         // This is a temporary workaround for a bug in the face detector with respect to operating
         // on very small images.  This will be fixed in a future release.  But in the near term, use
         // of the SafeFaceDetector class will patch the issue.
+
+        /*****************************************************************************/
+        // temporary init, make test easier
         safeDetector = new SafeFaceDetector(detector);
         final Button buttonFacePhoto = (Button) findViewById(R.id.buttonfacePhoto);
+        faceView1 = (FaceView) findViewById(R.id.faceView);
+        faceView2 = (FaceView) findViewById(R.id.faceView2);
+        Uri uri = Uri.parse("content://media/external/images/media/881");
+        Uri uri2 = Uri.parse("content://media/external/images/media/880");;
+        try {
+            facephoto = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+            facephoto2 = MediaStore.Images.Media.getBitmap(getContentResolver(), uri2);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Frame frame = new Frame.Builder().setBitmap(facephoto).build();
+        faces = safeDetector.detect(frame);
+        faceView1.setContent(facephoto, faces);
+        Frame frame2 = new Frame.Builder().setBitmap(facephoto2).build();
+        faces2 = safeDetector.detect(frame2);
+        faceView2.setContent(facephoto2, faces2);
+        /*****************************************************************************/
+
         buttonFacePhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -110,10 +130,10 @@ public class FaceSwapActivity extends AppCompatActivity {
                         facephoto = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
                         // Log.d(TAG, String.valueOf(bitmap));
 
-                        FaceView faceView = (FaceView) findViewById(R.id.faceView);
+//                        FaceView faceView1 = (FaceView) findViewById(R.id.faceView);
                         Frame frame = new Frame.Builder().setBitmap(facephoto).build();
                         faces = safeDetector.detect(frame);
-                        faceView.setContent(facephoto, faces);
+                        faceView1.setContent(facephoto, faces);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -145,15 +165,17 @@ public class FaceSwapActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK && imageReturnedIntent != null && imageReturnedIntent.getData() != null) {
 
                     Uri uri = imageReturnedIntent.getData();
+                    Log.d("linkpath", uri.toString());
+
                     getContentResolver();
                     try {
                         facephoto2 = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
                         // Log.d(TAG, String.valueOf(bitmap));
 
-                        FaceView faceView = (FaceView) findViewById(R.id.faceView2);
+//                        FaceView faceView2 = (FaceView) findViewById(R.id.faceView2);
                         Frame frame = new Frame.Builder().setBitmap(facephoto2).build();
                         faces2 = safeDetector.detect(frame);
-                        faceView.setContent(facephoto2, faces2);
+                        faceView2.setContent(facephoto2, faces2);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

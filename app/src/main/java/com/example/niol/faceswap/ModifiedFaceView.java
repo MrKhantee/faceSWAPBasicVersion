@@ -8,10 +8,8 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Environment;
-import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.SparseArray;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -75,8 +73,8 @@ public class ModifiedFaceView extends View implements Runnable{
         switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mode = DRAG;
-                startX = ev.getX();
-                startY = ev.getY();
+                startX = ev.getX() - previousTranslateX;
+                startY = ev.getY() - previousTranslateY;
                 break;
             case MotionEvent.ACTION_MOVE:
                 translateX = ev.getX() - startX;
@@ -109,7 +107,7 @@ public class ModifiedFaceView extends View implements Runnable{
 
         //The only time we want to re-draw the canvas is if we are panning (which happens when the mode is
         //DRAG and the zoom factor is not equal to 1) or if we're zooming
-        if ((mode == DRAG && scaleFactor != 1f /*&& dragged*/) || mode == ZOOM) {
+        if ((mode == DRAG && scaleFactor != 1f/* && dragged*/) || mode == ZOOM) {
             invalidate();
         }
 
@@ -311,8 +309,8 @@ public class ModifiedFaceView extends View implements Runnable{
 //            translateY = (1 - scaleFactor) * canvas.getHeight();
 //        }
 
-        translateX = (translateX * -1) < 0 ? 0 : translateX;
-        translateY = (translateY * -1) < 0 ? 0 : translateY;
+//        translateX = (translateX * -1) < 0 ? 0 : translateX;
+//        translateY = (translateY * -1) < 0 ? 0 : translateY;
 
         canvas.translate(translateX / scaleFactor, translateY / scaleFactor);
         //canvas.clipRect(mContentRect);
@@ -480,52 +478,52 @@ public class ModifiedFaceView extends View implements Runnable{
             // Don't let the object get too small or too large.
             mScaleFactor = Math.max(MIN_ZOOM, Math.min(mScaleFactor, MAX_ZOOM));
 
-            invalidate();
+//            invalidate();
             return true;
         }
     }
 
-    private final GestureDetector.SimpleOnGestureListener mGestureListener
-            = new GestureDetector.SimpleOnGestureListener() {
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2,
-                                float distanceX, float distanceY) {
-            // Scrolling uses math based on the viewport (as opposed to math using pixels).
-
-            // Pixel offset is the offset in screen pixels, while viewport offset is the
-            // offset within the current viewport.
-            float viewportOffsetX = distanceX * mCurrentViewport.width()
-                    / mContentRect.width();
-            float viewportOffsetY = -distanceY * mCurrentViewport.height()
-                    / mContentRect.height();
-
-            // Updates the viewport, refreshes the display.
-            setViewportBottomLeft(
-                    mCurrentViewport.left + viewportOffsetX,
-                    mCurrentViewport.bottom + viewportOffsetY);
-
-            return true;
-        }
-    };
+//    private final GestureDetector.SimpleOnGestureListener mGestureListener
+//            = new GestureDetector.SimpleOnGestureListener() {
+//
+//        @Override
+//        public boolean onScroll(MotionEvent e1, MotionEvent e2,
+//                                float distanceX, float distanceY) {
+//            // Scrolling uses math based on the viewport (as opposed to math using pixels).
+//
+//            // Pixel offset is the offset in screen pixels, while viewport offset is the
+//            // offset within the current viewport.
+//            float viewportOffsetX = distanceX * mCurrentViewport.width()
+//                    / mContentRect.width();
+//            float viewportOffsetY = -distanceY * mCurrentViewport.height()
+//                    / mContentRect.height();
+//
+//            // Updates the viewport, refreshes the display.
+//            setViewportBottomLeft(
+//                    mCurrentViewport.left + viewportOffsetX,
+//                    mCurrentViewport.bottom + viewportOffsetY);
+//
+//            return true;
+//        }
+//    };
 
     /**
      * Sets the current viewport (defined by mCurrentViewport) to the given
      * X and Y positions. Note that the Y value represents the topmost pixel position,
      * and thus the bottom of the mCurrentViewport rectangle.
      */
-    private void setViewportBottomLeft(float x, float y) {
-
-        float curWidth = mCurrentViewport.width();
-        float curHeight = mCurrentViewport.height();
-        x = Math.max(AXIS_X_MIN, Math.min(x, AXIS_X_MAX - curWidth));
-        y = Math.max(AXIS_Y_MIN + curHeight, Math.min(y, AXIS_Y_MAX));
-
-        mCurrentViewport.set(x, y - curHeight, x + curWidth, y);
-
-        // Invalidates the View to update the display.
-        ViewCompat.postInvalidateOnAnimation(this);
-    }
+//    private void setViewportBottomLeft(float x, float y) {
+//
+//        float curWidth = mCurrentViewport.width();
+//        float curHeight = mCurrentViewport.height();
+//        x = Math.max(AXIS_X_MIN, Math.min(x, AXIS_X_MAX - curWidth));
+//        y = Math.max(AXIS_Y_MIN + curHeight, Math.min(y, AXIS_Y_MAX));
+//
+//        mCurrentViewport.set(x, y - curHeight, x + curWidth, y);
+//
+//        // Invalidates the View to update the display.
+//        ViewCompat.postInvalidateOnAnimation(this);
+//    }
 }
 
 
