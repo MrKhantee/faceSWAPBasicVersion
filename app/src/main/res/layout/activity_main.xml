@@ -7,54 +7,60 @@
     android:fitsSystemWindows="true"
     tools:context="com.example.niol.faceswap.MainActivity">
 
-    <android.support.design.widget.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
-
-    </android.support.design.widget.AppBarLayout>
-
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <Button
-            android:id="@+id/take_picture"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:text="@string/take_picture"
-            android:onClick="selfDestruct" />
-        <Button
-            android:id="@+id/face_swap"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:text="@string/picture_face_swap"
-            android:onClick="selfDestruct" />
-        <Button
-            android:id="@+id/transfer_picture"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:text="@string/transfer_picture"
-            android:onClick="selfDestruct" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/take_picture"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="Take Picture"
+                android:onClick="selfDestruct"
+                android:layout_gravity="center_horizontal"
+                android:layout_above="@+id/face_swap"
+                android:layout_centerHorizontal="true"/>
+
+            <Button
+                android:id="@+id/face_swap"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="Static Face Swap"
+                android:onClick="selfDestruct"
+                android:layout_gravity="center_horizontal"
+                android:layout_above="@+id/transfer_picture"
+                android:layout_centerHorizontal="true"/>
+
+            <Button
+                android:id="@+id/transfer_picture"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="Send Picture over WifiP2P"
+                android:onClick="selfDestruct"
+                android:layout_gravity="center_horizontal"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="125dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="FaceSwap"
+                android:id="@+id/textView"
+                android:layout_marginTop="125dp"
+                android:textAlignment="center"
+                android:textSize="50dp"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"/>
+        </RelativeLayout>
 
     </LinearLayout>
-
-    <include layout="@layout/content_main" />
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_dialog_email" />
 
 </android.support.design.widget.CoordinatorLayout>
