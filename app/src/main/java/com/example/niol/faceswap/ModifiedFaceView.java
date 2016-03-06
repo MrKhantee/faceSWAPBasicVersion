@@ -67,55 +67,6 @@ public class ModifiedFaceView extends View implements Runnable{
         mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        // Let the ScaleGestureDetector inspect all events.
-        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_DOWN:
-                mode = DRAG;
-                startX = ev.getX() - previousTranslateX;
-                startY = ev.getY() - previousTranslateY;
-                break;
-            case MotionEvent.ACTION_MOVE:
-                translateX = ev.getX() - startX;
-                translateY = ev.getY() - startY;
-
-//                double distance = Math.sqrt(Math.pow(ev.getX() - (startX + previousTranslateX), 2) + Math.pow(ev.getY() - (startY + previousTranslateY), 2));
-//
-//                if(distance > 0) {
-//                    dragged = true;
-//                }
-
-                break;
-            case MotionEvent.ACTION_POINTER_DOWN:
-                mode = ZOOM;
-                break;
-            case MotionEvent.ACTION_UP:
-                mode = NONE;
-//                dragged = false;
-                previousTranslateX = translateX;
-                previousTranslateY = translateY;
-                break;
-            case MotionEvent.ACTION_POINTER_UP:
-                mode = DRAG;
-                previousTranslateX = translateX;
-                previousTranslateY = translateY;
-                break;
-        }
-//        gestureDetector.onTouchEvent(ev);
-        mScaleDetector.onTouchEvent(ev);
-
-        //The only time we want to re-draw the canvas is if we are panning (which happens when the mode is
-        //DRAG and the zoom factor is not equal to 1) or if we're zooming
-        if ((mode == DRAG && scaleFactor != 1f/* && dragged*/) || mode == ZOOM) {
-            invalidate();
-        }
-
-        return true;
-    }
-
-
-
     /**
      * Sets the bitmap background and the associated face detections.
      */
@@ -285,6 +236,55 @@ public class ModifiedFaceView extends View implements Runnable{
     void deleteNoseAndMouth(Bitmap bitmap, SparseArray<Face> faces) {
         //int leftEyeBorder =
         //deleteRegion(bitmap,leftEyeBorder,topEyeBorder)
+    }
+
+    /************************************************************************/
+    // for zooming and dragging                                             //
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        // Let the ScaleGestureDetector inspect all events.
+        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                mode = DRAG;
+                startX = ev.getX() - previousTranslateX;
+                startY = ev.getY() - previousTranslateY;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                translateX = ev.getX() - startX;
+                translateY = ev.getY() - startY;
+
+                double distance = Math.sqrt(Math.pow(ev.getX() - (startX + previousTranslateX), 2) + Math.pow(ev.getY() - (startY + previousTranslateY), 2));
+
+                if(distance > 0) {
+                    dragged = true;
+                }
+
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mode = ZOOM;
+                break;
+            case MotionEvent.ACTION_UP:
+                mode = NONE;
+                dragged = false;
+                previousTranslateX = translateX;
+                previousTranslateY = translateY;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mode = DRAG;
+                previousTranslateX = translateX;
+                previousTranslateY = translateY;
+                break;
+        }
+//        gestureDetector.onTouchEvent(ev);
+        mScaleDetector.onTouchEvent(ev);
+
+        //The only time we want to re-draw the canvas is if we are panning (which happens when the mode is
+        //DRAG and the zoom factor is not equal to 1) or if we're zooming
+        if ((mode == DRAG && scaleFactor != 1f && dragged) || mode == ZOOM) {
+            invalidate();
+        }
+
+        return true;
     }
 
     /**
@@ -478,7 +478,7 @@ public class ModifiedFaceView extends View implements Runnable{
             // Don't let the object get too small or too large.
             mScaleFactor = Math.max(MIN_ZOOM, Math.min(mScaleFactor, MAX_ZOOM));
 
-//            invalidate();
+            invalidate();
             return true;
         }
     }
