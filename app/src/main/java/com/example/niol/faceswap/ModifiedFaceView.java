@@ -45,6 +45,27 @@ public class ModifiedFaceView extends View implements Runnable{
     private RectF mCurrentViewport = new RectF(AXIS_X_MIN, AXIS_Y_MIN, AXIS_X_MAX, AXIS_Y_MAX);
     private Rect mContentRect = new Rect();
 
+    private static float MIN_ZOOM = 1f;
+    private static float MAX_ZOOM = 5f;
+
+    private float scaleFactor = 1.f;
+
+    private static int NONE = 0;
+    private static int DRAG = 1;
+    private static int ZOOM = 2;
+
+    private int mode;
+
+    //These two variables keep track of the X and Y coordinate of the finger when it first
+    //touches the screen
+    private float startX = 0f;
+    private float startY = 0f;
+
+    //These two variables keep track of the amount we need to translate the canvas along the X
+    //and the Y coordinate
+    private float translateX = 0f;
+    private float translateY = 0f;
+
     public ModifiedFaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         gestureDetector = new GestureDetector(context, mGestureListener);
@@ -54,8 +75,35 @@ public class ModifiedFaceView extends View implements Runnable{
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         // Let the ScaleGestureDetector inspect all events.
+        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                mode = DRAG;
+                startX = ev.getX();
+                startY = ev.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                translateX = ev.getX() - startX;
+                translateY = ev.getY() - startY;
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mode = ZOOM;
+                break;
+            case MotionEvent.ACTION_UP:
+                mode = NONE;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mode = DRAG;
+                break;
+        }
         gestureDetector.onTouchEvent(ev);
         mScaleDetector.onTouchEvent(ev);
+
+        //The only time we want to re-draw the canvas is if we are panning (which happens when the mode is
+        //DRAG and the zoom factor is not equal to 1) or if we're zooming
+        if ((mode == DRAG && scaleFactor != 1f) || mode == ZOOM) {
+            invalidate();
+        }
+
         return true;
     }
 
@@ -241,6 +289,7 @@ public class ModifiedFaceView extends View implements Runnable{
 
         canvas.save();
         canvas.scale(mScaleFactor, mScaleFactor);
+        canvas.translate(translateX / scaleFactor, translateY / scaleFactor);
         //canvas.clipRect(mContentRect);
 
         if ((mBitmap != null) && (mFaces != null ) && (mBitmap2 != null) && (mFaces2 != null)) {
@@ -404,7 +453,7 @@ public class ModifiedFaceView extends View implements Runnable{
             mScaleFactor *= detector.getScaleFactor();
 
             // Don't let the object get too small or too large.
-            mScaleFactor = Math.max(0.1f, Math.min(mScaleFactor, 5.0f));
+            mScaleFactor = Math.max(MIN_ZOOM, Math.min(mScaleFactor, MAX_ZOOM));
 
             invalidate();
             return true;
