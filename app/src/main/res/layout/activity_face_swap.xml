@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Picture 1"
+            android:layout_gravity="center_horizontal"
+            android:textAllCaps="false"
+            android:id="@+id/buttonfacePhoto"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/buttongeneratemodifiedphoto"
+            android:layout_toStartOf="@+id/buttongeneratemodifiedphoto"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Picture 2"
+            android:textAllCaps="false"
+            android:id="@+id/buttonfacePhoto2"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/buttongeneratemodifiedphoto"
+            android:layout_toEndOf="@+id/buttongeneratemodifiedphoto"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="SWAP"
+            android:textAllCaps="false"
+            android:id="@+id/buttongeneratemodifiedphoto"
+            android:layout_above="@+id/modifiedView"
+            android:layout_centerHorizontal="true"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="158dp"
+            android:layout_above="@+id/buttongeneratemodifiedphoto"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/buttonfacePhoto">
+
+            <com.example.niol.faceswap.FaceView
+                android:id="@+id/faceView"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/buttonfacePhoto"
+                android:layout_toStartOf="@+id/buttonfacePhoto"
+                android:layout_above="@+id/buttongeneratemodifiedphoto"
+                android:layout_toLeftOf="@+id/buttonfacePhoto"/>
+
+            <com.example.niol.faceswap.FaceView
+                android:id="@+id/faceView2"
+                android:layout_width="200dp"
+                android:layout_weight="1"
+                android:layout_gravity="center_horizontal"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <com.example.niol.faceswap.ModifiedFaceView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/modifiedView"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"></com.example.niol.faceswap.ModifiedFaceView>
+
+    </RelativeLayout>
+
+</LinearLayout>
+
