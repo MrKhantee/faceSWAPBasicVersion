@@ -50,7 +50,7 @@ public class FaceSwapActivity extends AppCompatActivity {
         final Button buttonFacePhoto = (Button) findViewById(R.id.buttonfacePhoto);
         faceView1 = (FaceView) findViewById(R.id.faceView);
         faceView2 = (FaceView) findViewById(R.id.faceView2);
-        Uri uri = Uri.parse("content://media/external/images/media/881");
+        /*Uri uri = Uri.parse("content://media/external/images/media/881");
         Uri uri2 = Uri.parse("content://media/external/images/media/880");;
         try {
             facephoto = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
@@ -63,7 +63,7 @@ public class FaceSwapActivity extends AppCompatActivity {
         faceView1.setContent(facephoto, faces);
         Frame frame2 = new Frame.Builder().setBitmap(facephoto2).build();
         faces2 = safeDetector.detect(frame2);
-        faceView2.setContent(facephoto2, faces2);
+        faceView2.setContent(facephoto2, faces2);*/
         /*****************************************************************************/
 
         buttonFacePhoto.setOnClickListener(new View.OnClickListener() {
