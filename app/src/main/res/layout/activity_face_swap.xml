@@ -40,11 +40,11 @@
             android:text="SWAP"
             android:textAllCaps="false"
             android:id="@+id/buttongeneratemodifiedphoto"
+            android:layout_marginRight="92dp"
+            android:layout_marginEnd="92dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginRight="64dp"
-            android:layout_marginEnd="64dp"/>
+            android:layout_alignParentEnd="true"/>
 
         <com.example.niol.faceswap.ModifiedFaceView
             android:layout_width="0dp"
