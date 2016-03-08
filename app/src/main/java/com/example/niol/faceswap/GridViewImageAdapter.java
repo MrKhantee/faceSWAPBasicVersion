@@ -2,6 +2,7 @@ package com.example.niol.faceswap;
 
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -25,12 +26,14 @@ public class GridViewImageAdapter extends BaseAdapter {
     private Activity _activity;
     private ArrayList<String> _filePaths = new ArrayList<String>();
     private int imageWidth;
+    private DeviceDetailFragment d;
 
     public GridViewImageAdapter(Activity activity, ArrayList<String> filePaths,
-                                int imageWidth) {
+                                int imageWidth, DeviceDetailFragment d) {
         this._activity = activity;
         this._filePaths = filePaths;
         this.imageWidth = imageWidth;
+        this.d = d;
     }
 
     @Override
@@ -85,27 +88,19 @@ public class GridViewImageAdapter extends BaseAdapter {
         public void onClick(View v) {
             // on selecting grid view image
             // launch full screen activity
-
-//            Utils utils;
-//            utils = new Utils(_activity.getApplicationContext());
-//            utils.getFilePaths();
-
-
 //            Intent i = new Intent(_activity, FullScreenViewActivity.class);
 //            i.putExtra("position", _postion);
 //            _activity.startActivity(i);
 //
-//            Uri uri = utils.getFilePaths();
-//
-//            Intent serviceIntent = new Intent(_activity, FileTransferService.class);
-//            serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-//            serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-//            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-//                    info.groupOwnerAddress.getHostAddress());
-//            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
-//            _activity.startService(serviceIntent);
+            Intent serviceIntent = new Intent(_activity, FileTransferService.class);
+            serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+            serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, "file://"+_filePaths.get(_postion));
+            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                    d.getAddress());
+            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+            _activity.startService(serviceIntent);
 
-            Log.d("ImageClikc", "click");
+            Log.d("ImageClick", "file://"+_filePaths.get(_postion));
         }
 
     }

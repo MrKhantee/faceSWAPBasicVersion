@@ -119,22 +119,22 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
             }
         });
 
-        gridView = (GridView) findViewById(R.id.gridView);
-
-        utils = new Utils(this);
-
-        // Initilizing Grid View
-        InitilizeGridLayout();
-
-        // loading all image paths from SD card
-        imagePaths = utils.getFilePaths();
-
-        // Gridview adapter
-        adapter = new GridViewImageAdapter(this, imagePaths,
-                columnWidth);
-
-        // setting grid view adapter
-        gridView.setAdapter(adapter);
+//        gridView = (GridView) findViewById(R.id.gridView);
+//
+//        utils = new Utils(this);
+//
+//        // Initilizing Grid View
+//        InitilizeGridLayout();
+//
+//        // loading all image paths from SD card
+//        imagePaths = utils.getFilePaths();
+//
+//        // Gridview adapter
+//        adapter = new GridViewImageAdapter(this, imagePaths,
+//                columnWidth);
+//
+//        // setting grid view adapter
+//        gridView.setAdapter(adapter);
     }
 
     private void InitilizeGridLayout() {

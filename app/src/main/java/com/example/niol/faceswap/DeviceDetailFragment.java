@@ -20,6 +20,7 @@ import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -30,9 +31,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.GridView;
 import android.widget.TextView;
 
 import com.example.niol.faceswap.DeviceListFragment.DeviceActionListener;
@@ -44,6 +47,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 /**
  * A fragment that manages a particular peer and allows interaction with device
@@ -57,6 +61,12 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     private WifiP2pInfo info;
     ProgressDialog progressDialog = null;
 
+    private Utils utils;
+    private ArrayList<String> imagePaths = new ArrayList<String>();
+    private GridViewImageAdapter adapter;
+    private GridView gridView;
+    private int columnWidth;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -66,6 +76,24 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         mContentView = inflater.inflate(R.layout.device_detail, null);
+
+        gridView = (GridView) mContentView.findViewById(R.id.gridView);
+
+        utils = new Utils(getActivity());
+
+        // Initilizing Grid View
+        InitilizeGridLayout();
+
+        // loading all image paths from SD card
+        imagePaths = utils.getFilePaths();
+
+        // Gridview adapter
+        adapter = new GridViewImageAdapter(getActivity(), imagePaths,
+                columnWidth, this);
+
+        // setting grid view adapter
+        gridView.setAdapter(adapter);
+
         mContentView.findViewById(R.id.btn_connect).setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -117,12 +145,29 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         return mContentView;
     }
 
+    private void InitilizeGridLayout() {
+        Resources r = getResources();
+        float padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                AppConstant.GRID_PADDING, r.getDisplayMetrics());
+
+        columnWidth = (int) ((utils.getScreenWidth() - ((AppConstant.NUM_OF_COLUMNS + 1) * padding)) / AppConstant.NUM_OF_COLUMNS);
+
+        gridView.setNumColumns(AppConstant.NUM_OF_COLUMNS);
+        gridView.setColumnWidth(columnWidth);
+        gridView.setStretchMode(GridView.NO_STRETCH);
+        gridView.setPadding((int) padding, (int) padding, (int) padding,
+                (int) padding);
+        gridView.setHorizontalSpacing((int) padding);
+        gridView.setVerticalSpacing((int) padding);
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         // User has picked an image. Transfer it to group owner i.e peer using
         // FileTransferService.
         Uri uri = data.getData();
+
         TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
         statusText.setText("Sending: " + uri);
         Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri);
@@ -133,6 +178,11 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 info.groupOwnerAddress.getHostAddress());
         serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
         getActivity().startService(serviceIntent);
+        Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri.toString());
+    }
+
+    public String getAddress() {
+        return info.groupOwnerAddress.getHostAddress();
     }
 
     @Override

@@ -6,9 +6,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Environment;
 import android.util.AttributeSet;
 import android.util.SparseArray;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import com.google.android.gms.vision.face.Face;
@@ -28,8 +31,40 @@ public class ModifiedFaceView extends View implements Runnable{
     private Bitmap mBitmap, mBitmap2,finalBitmap;
     private SparseArray<Face> mFaces, mFaces2;
 
+//    private GestureDetector gestureDetector;
+    private ScaleGestureDetector mScaleDetector;
+    private float mScaleFactor = 1.f;
+
+    private static final float AXIS_X_MIN = -1f;
+    private static final float AXIS_X_MAX = 1f;
+    private static final float AXIS_Y_MIN = -1f;
+    private static final float AXIS_Y_MAX = 1f;
+
+    private RectF mCurrentViewport = new RectF(AXIS_X_MIN, AXIS_Y_MIN, AXIS_X_MAX, AXIS_Y_MAX);
+    private Rect mContentRect = new Rect();
+
+    /****************************************/
+    // for zooming and dragging             //
+    private static float MIN_ZOOM = 1f;
+    private static float MAX_ZOOM = 5f;
+    private float scaleFactor = 1.f;
+    private static int NONE = 0;
+    private static int DRAG = 1;
+    private static int ZOOM = 2;
+    private int mode;
+    private float startX = 0f;
+    private float startY = 0f;
+    private float translateX = 0f;
+    private float translateY = 0f;
+    private float previousTranslateX = 0f;
+    private float previousTranslateY = 0f;
+    private boolean dragged = true;
+    /****************************************/
+
     public ModifiedFaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
+//        gestureDetector = new GestureDetector(context, mGestureListener);
+        mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
 
     /**
@@ -124,7 +159,7 @@ public class ModifiedFaceView extends View implements Runnable{
                 righttCheekColor = bitmap.getPixel((int)faces.valueAt(0).getLandmarks().get(4).getPosition().x,(int)faces.valueAt(0).getLandmarks().get(4).getPosition().y);
         return leftCheekColor ;
     }
-    void smooothRegion(Bitmap bitmap, int left, int top, int right, int down){
+    void smoothRegion(Bitmap bitmap, int left, int top, int right, int down){
         for(int x = left; x < right; x++){
             for(int y = top; y < down; y++){
 
@@ -156,43 +191,13 @@ public class ModifiedFaceView extends View implements Runnable{
                 leftCheekX = (int)leftCheekX(faces),leftCheekY = (int)leftCheekY(faces),
                 averageColor,topColor,downColor,leftColor,rightColor,leftCheekColor = bitmap.getPixel(leftCheekX,leftCheekY);
 
-        float distance,downDistance,topDistance,leftDistance,rightDistance;
-        /*for(int x = leftEyeBorder; x < rightEyeBorder + 1; x++){
-            if(isColorDifferent(bitmap,x,topEyeBorder,leftCheekX,leftCheekY))
-                bitmap.setPixel(x,topEyeBorder, leftCheekColor);
-            if(isColorDifferent(bitmap,x,downEyeBorder,leftCheekX,leftCheekY))
-                bitmap.setPixel(x,downEyeBorder, leftCheekColor);
-        }
-        for(int y = topEyeBorder; y < downEyeBorder + 1; y++){
-            if(isColorDifferent(bitmap,leftEyeBorder,y,leftCheekX,leftCheekY))
-                bitmap.setPixel(leftEyeBorder,y, bitmap.getPixel(leftEyeBorder ,y - 1));
-            if(isColorDifferent(bitmap,rightEyeBorder,y,leftCheekX,leftCheekY))
-                bitmap.setPixel(rightEyeBorder,y, bitmap.getPixel(x - 1,y - 1));
-        }*/
-
        for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
             for(int y = topEyeBorder + 1;y < downEyeBorder; y++) {
                 if (isColorDifferent(bitmap, x, y, leftCheekX, leftCheekY)) {
-
-                    //bitmap.setPixel(x, y, leftCheekColor);
                     bitmap.setPixel(x, y, bitmap.getPixel(x ,y - 1));
                 }
             }
         }
-        /*for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
-            for(int y = topEyeBorder + 1;y < downEyeBorder; y++) {
-                topColor = bitmap.getPixel(x ,y - 1);
-                downColor = bitmap.getPixel(x ,y + 1);
-                leftColor = bitmap.getPixel(x - 1,y);
-                rightColor = bitmap.getPixel(x + 1,y);
-                leftDistance = topDistance = rightDistance = downDistance = 1;
-
-                averageColor = averageColor(leftColor,topColor,rightColor,downColor,leftDistance,topDistance,rightDistance,downDistance);
-                //averageColor = bitmap.getPixel(leftCheekX,leftCheekY);
-                bitmap.setPixel(x,y,averageColor);
-                //}
-            }
-        }*/
     }
     void extractEyes(Bitmap bitmap, SparseArray<Face> faces,Bitmap bitmap2, SparseArray<Face> faces2){
         //extract face from bitmap and put the face on the bitmap2
@@ -228,9 +233,58 @@ public class ModifiedFaceView extends View implements Runnable{
         deleteEyes(bitmap, faces);
         //deleteNoseAndMouth(bitmap,faces);
     }
-    void deleteNoseAndMouth(Bitmap bitmap, SparseArray<Face> faces){
+    void deleteNoseAndMouth(Bitmap bitmap, SparseArray<Face> faces) {
         //int leftEyeBorder =
         //deleteRegion(bitmap,leftEyeBorder,topEyeBorder)
+    }
+
+    /************************************************************************/
+    // for zooming and dragging                                             //
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        // Let the ScaleGestureDetector inspect all events.
+        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                mode = DRAG;
+                startX = ev.getX() - previousTranslateX;
+                startY = ev.getY() - previousTranslateY;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                translateX = ev.getX() - startX;
+                translateY = ev.getY() - startY;
+
+                double distance = Math.sqrt(Math.pow(ev.getX() - (startX + previousTranslateX), 2) + Math.pow(ev.getY() - (startY + previousTranslateY), 2));
+
+                if(distance > 0) {
+                    dragged = true;
+                }
+
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mode = ZOOM;
+                break;
+            case MotionEvent.ACTION_UP:
+                mode = NONE;
+                dragged = false;
+                previousTranslateX = translateX;
+                previousTranslateY = translateY;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mode = DRAG;
+                previousTranslateX = translateX;
+                previousTranslateY = translateY;
+                break;
+        }
+//        gestureDetector.onTouchEvent(ev);
+        mScaleDetector.onTouchEvent(ev);
+
+        //The only time we want to re-draw the canvas is if we are panning (which happens when the mode is
+        //DRAG and the zoom factor is not equal to 1) or if we're zooming
+        if ((mode == DRAG && scaleFactor != 1f && dragged) || mode == ZOOM) {
+            invalidate();
+        }
+
+        return true;
     }
 
     /**
@@ -239,12 +293,35 @@ public class ModifiedFaceView extends View implements Runnable{
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        canvas.save();
+        canvas.scale(mScaleFactor, mScaleFactor);
+
+//        if((translateX * -1) < 0) {
+//            translateX = 0;
+//        } else if ((translateX * -1) > (scaleFactor - 1) * canvas.getWidth()) {
+//            translateX = (1 - scaleFactor) * canvas.getWidth();
+//        }
+//
+//        if(translateY * -1 < 0) {
+//            translateY = 0;
+//        } else if((translateY * -1) > (scaleFactor - 1) * canvas.getHeight()) {
+//            translateY = (1 - scaleFactor) * canvas.getHeight();
+//        }
+
+//        translateX = (translateX * -1) < 0 ? 0 : translateX;
+//        translateY = (translateY * -1) < 0 ? 0 : translateY;
+
+        canvas.translate(translateX / scaleFactor, translateY / scaleFactor);
+        //canvas.clipRect(mContentRect);
+
         if ((mBitmap != null) && (mFaces != null ) && (mBitmap2 != null) && (mFaces2 != null)) {
             double scale = drawBitmap(canvas);
             //drawFaceAnnotations(canvas, scale);
             //Bitmap resizedbitmap=Bitmap.createBitmap(bitmap, 0,0,(int)faces.valueAt(0).getLandmarks().get(0).getPosition().x,(int)faces.valueAt(0).getLandmarks().get(0).getPosition().y);
 
         }
+        canvas.restore();
     }
     /**
      * Converts a immutable bitmap to a mutable bitmap. This operation doesn't allocates
@@ -374,6 +451,14 @@ public class ModifiedFaceView extends View implements Runnable{
         mFaces2 = faces2;
     }
 
+    public void setData(ModifiedFaceView modifiedFaceView) {
+        mBitmap = modifiedFaceView.mBitmap;
+        mBitmap2 = modifiedFaceView.mBitmap2;
+        finalBitmap = modifiedFaceView.finalBitmap;
+        mFaces = modifiedFaceView.mFaces;
+        mFaces2 = modifiedFaceView.mFaces2;
+    }
+
     @Override
     public void run() {
         //finalBitmap = Bitmap.createBitmap(mBitmap2);
@@ -383,6 +468,64 @@ public class ModifiedFaceView extends View implements Runnable{
 
         extractEyes(mBitmap,mFaces,finalBitmap,mFaces2);
     }
+
+    private class ScaleListener
+            extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            mScaleFactor *= detector.getScaleFactor();
+
+            // Don't let the object get too small or too large.
+            mScaleFactor = Math.max(MIN_ZOOM, Math.min(mScaleFactor, MAX_ZOOM));
+
+            invalidate();
+            return true;
+        }
+    }
+
+//    private final GestureDetector.SimpleOnGestureListener mGestureListener
+//            = new GestureDetector.SimpleOnGestureListener() {
+//
+//        @Override
+//        public boolean onScroll(MotionEvent e1, MotionEvent e2,
+//                                float distanceX, float distanceY) {
+//            // Scrolling uses math based on the viewport (as opposed to math using pixels).
+//
+//            // Pixel offset is the offset in screen pixels, while viewport offset is the
+//            // offset within the current viewport.
+//            float viewportOffsetX = distanceX * mCurrentViewport.width()
+//                    / mContentRect.width();
+//            float viewportOffsetY = -distanceY * mCurrentViewport.height()
+//                    / mContentRect.height();
+//
+//            // Updates the viewport, refreshes the display.
+//            setViewportBottomLeft(
+//                    mCurrentViewport.left + viewportOffsetX,
+//                    mCurrentViewport.bottom + viewportOffsetY);
+//
+//            return true;
+//        }
+//    };
+
+    /**
+     * Sets the current viewport (defined by mCurrentViewport) to the given
+     * X and Y positions. Note that the Y value represents the topmost pixel position,
+     * and thus the bottom of the mCurrentViewport rectangle.
+     */
+//    private void setViewportBottomLeft(float x, float y) {
+//
+//        float curWidth = mCurrentViewport.width();
+//        float curHeight = mCurrentViewport.height();
+//        x = Math.max(AXIS_X_MIN, Math.min(x, AXIS_X_MAX - curWidth));
+//        y = Math.max(AXIS_Y_MIN + curHeight, Math.min(y, AXIS_Y_MAX));
+//
+//        mCurrentViewport.set(x, y - curHeight, x + curWidth, y);
+//
+//        // Invalidates the View to update the display.
+//        ViewCompat.postInvalidateOnAnimation(this);
+//    }
 }
+
+
 
 

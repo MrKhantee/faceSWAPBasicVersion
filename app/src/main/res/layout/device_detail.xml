@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="match_parent"
     android:background="@drawable/details_view"
     android:visibility="gone">
     <LinearLayout
@@ -13,9 +13,9 @@
         android:layout_height="match_parent">
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
             <Button
                 android:id="@+id/btn_connect"
                 android:layout_width="wrap_content"
@@ -32,6 +32,11 @@
                 android:layout_height="wrap_content"
                 android:text="@string/get_file_button"
                 android:visibility="gone" />
+            <GridView
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:id="@+id/gridView"
+                android:layout_gravity="center_horizontal" />
         </LinearLayout>
         <TextView
             android:id="@+id/device_address"
