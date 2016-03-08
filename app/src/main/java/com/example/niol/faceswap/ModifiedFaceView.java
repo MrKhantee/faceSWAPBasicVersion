@@ -28,8 +28,8 @@ import java.nio.channels.FileChannel;
  * Created by niol on 2016/2/14.
  */
 public class ModifiedFaceView extends View implements Runnable{
-    private Bitmap mBitmap, mBitmap2,finalBitmap;
-    private SparseArray<Face> mFaces, mFaces2;
+    private Bitmap bmp;
+    private SparseArray<Face> faces;
 
 //    private GestureDetector gestureDetector;
     private ScaleGestureDetector mScaleDetector;
@@ -73,92 +73,147 @@ public class ModifiedFaceView extends View implements Runnable{
     void setContent() {
         invalidate();
     }
-    float leftEyeX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(0).getPosition().x;
-    }
-    float leftEyeY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(0).getPosition().y;
-    }
-    float rightEyeX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(1).getPosition().x;
-    }
-    float rightEyeY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(1).getPosition().y;
-    }
-    float noseX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(2).getPosition().x;
-    }
-    float noseY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(2).getPosition().y;
-    }
-    float leftCheekX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(4).getPosition().x;
-    }
-    float leftCheekY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(4).getPosition().y;
-    }
-    float rightCheekX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(3).getPosition().x;
+
+    int[][] getFaceMask(int[][] points) {
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+
+        int[] x = points[0];
+        int[] y = points[1];
+
+        int[][] mask = new int[width][height];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                mask[i][j] = 0;
+            }
+        }
+
+        for (int j = y[0]; j < y[2]; j++) {
+            for (int i = x[0]; i < x[1]; i++) {
+                mask[i][j] = 1;
+            }
+        }
+
+        for (int j = y[5]; j < y[2]; j++) {
+            double x1 = (double)(j - y[5]) / (y[4] - y[5]) * (x[4] - x[5]) + x[5];
+            double x2 = (1 - ((double)(j - y[2]) / (y[3] - y[2]))) * (x[2] - x[3]) + x[3];
+            for (int i = (int)x1; i < x2; i++) {
+                mask[i][j] = 1;
+            }
+        }
+
+        return mask;
     }
 
-    float rightCheekY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(3).getPosition().y;
+    int[][] getFacePoints(Face face) {
+        float[] x = new float[6];
+        float[] y = new float[6];
+
+        x[0] = leftEyeBorder(face);
+        y[0] = topEyeBorder(face);
+        x[1] = leftEyeBorder(face) + eyeWidth(face);
+        y[1] = y[0];
+        x[2] = x[1];
+        y[2] = rightCheekY(face);
+        x[3] = (downMouthX(face) + rightCheekX(face)) / 2;
+        y[3] = downMouthY(face) + 0.2f * (downMouthY(face) - y[0]);
+        x[4] = (downMouthX(face) + leftCheekX(face)) / 2;
+        y[4] = y[3];
+        x[5] = x[0];
+        y[5] = leftCheekY(face);
+
+        int[][] points = new int[2][6];
+        for (int i = 0; i < 6; i++) {
+            points[0][i] = (int)x[i];
+            points[1][i] = (int)y[i];
+        }
+
+        return points;
     }
-    float leftMouthX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(6).getPosition().x;
+
+
+    float leftEyeX(Face face) {
+        return face.getLandmarks().get(0).getPosition().x;
     }
-    float leftMouthY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(6).getPosition().y;
+    float leftEyeY(Face face) {
+        return face.getLandmarks().get(0).getPosition().y;
     }
-    float rightMouthX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(5).getPosition().x;
+    float rightEyeX(Face face) {
+        return face.getLandmarks().get(1).getPosition().x;
     }
-    float rightMouthY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(5).getPosition().y;
+    float rightEyeY(Face face) {
+        return face.getLandmarks().get(1).getPosition().y;
     }
-    float downMouthX(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(7).getPosition().x;
+    float noseX(Face face) {
+        return face.getLandmarks().get(2).getPosition().x;
     }
-    float downMouthY(SparseArray<Face> faces) {
-        return faces.valueAt(0).getLandmarks().get(7).getPosition().y;
+    float noseY(Face face) {
+        return face.getLandmarks().get(2).getPosition().y;
     }
-    float leftMouthBorder(SparseArray<Face> faces) {
+    float leftCheekX(Face face) {
+        return face.getLandmarks().get(4).getPosition().x;
+    }
+    float leftCheekY(Face face) {
+        return face.getLandmarks().get(4).getPosition().y;
+    }
+    float rightCheekX(Face face) {
+        return face.getLandmarks().get(3).getPosition().x;
+    }
+
+    float rightCheekY(Face face) {
+        return face.getLandmarks().get(3).getPosition().y;
+    }
+    float leftMouthX(Face face) {
+        return face.getLandmarks().get(6).getPosition().x;
+    }
+    float leftMouthY(Face face) {
+        return face.getLandmarks().get(6).getPosition().y;
+    }
+    float rightMouthX(Face face) {
+        return face.getLandmarks().get(5).getPosition().x;
+    }
+    float rightMouthY(Face face) {
+        return face.getLandmarks().get(5).getPosition().y;
+    }
+    float downMouthX(Face face) {
+        return face.getLandmarks().get(7).getPosition().x;
+    }
+    float downMouthY(Face face) {
+        return face.getLandmarks().get(7).getPosition().y;
+    }
+    float leftMouthBorder(Face face) {
         float k = 0.1f;
-        return leftMouthX(faces) - k *(rightMouthX(faces) - leftMouthX(faces));
+        return leftMouthX(face) - k *(rightMouthX(face) - leftMouthX(face));
     }
-    float MouthWidth(SparseArray<Face> faces) {
+    float MouthWidth(Face face) {
         float k = 0.1f;
-        return (1 + 2 * k) * (rightMouthX(faces) - leftMouthX(faces));
+        return (1 + 2 * k) * (rightMouthX(face) - leftMouthX(face));
     }
     float  k3 = 0.15f;
-    float topMouthBorder(SparseArray<Face> faces) {
-        return eyeHeight(faces) + topEyeBorder(faces);
+    float topMouthBorder(Face face) {
+        return eyeHeight(face) + topEyeBorder(face);
     }
-    float mouthHeight(SparseArray<Face> faces) {
+    float mouthHeight(Face face) {
         float k = 1f;
-        return k * (downMouthY(faces) - leftEyeY(faces));
+        return k * (downMouthY(face) - leftEyeY(face));
     }
-    float leftEyeBorder(SparseArray<Face> faces) {
+    float leftEyeBorder(Face face) {
         float k = 0.38f;
-        return leftEyeX(faces) - k *(rightEyeX(faces) - leftEyeX(faces));
+        return leftEyeX(face) - k *(rightEyeX(face) - leftEyeX(face));
     }
-    float eyeWidth(SparseArray<Face> faces) {
+    float eyeWidth(Face face) {
         float k = 0.38f;
-        return (1 + 2 * k) * (rightEyeX(faces) - leftEyeX(faces));
+        return (1 + 2 * k) * (rightEyeX(face) - leftEyeX(face));
     }
-    float topEyeBorder(SparseArray<Face> faces) {
+    float topEyeBorder(Face face) {
         float k = 0.7f;
-        return leftEyeY(faces) - k * (noseY(faces) - leftEyeY(faces));
+        return leftEyeY(face) - k * (noseY(face) - leftEyeY(face));
     }
-    float eyeHeight(SparseArray<Face> faces) {
+    float eyeHeight(Face face) {
         float k = 0.98f;
-        return k * (noseY(faces) - leftEyeY(faces));
+        return k * (noseY(face) - leftEyeY(face));
     }
-    int averageCheekColor(Bitmap bitmap, SparseArray<Face> faces){
-        int leftCheekColor = bitmap.getPixel((int)faces.valueAt(0).getLandmarks().get(3).getPosition().x,(int)faces.valueAt(0).getLandmarks().get(3).getPosition().y),
-                righttCheekColor = bitmap.getPixel((int)faces.valueAt(0).getLandmarks().get(4).getPosition().x,(int)faces.valueAt(0).getLandmarks().get(4).getPosition().y);
-        return leftCheekColor ;
-    }
+
     void smoothRegion(Bitmap bitmap, int left, int top, int right, int down){
         for(int x = left; x < right; x++){
             for(int y = top; y < down; y++){
@@ -166,71 +221,189 @@ public class ModifiedFaceView extends View implements Runnable{
             }
         }
     }
-    boolean isColorDifferent(Bitmap bitmap,int x1,int y1,int x2,  int y2){
-        int color1 = bitmap.getPixel(x1,y1), color2 =bitmap.getPixel(x2,y2),
-                threshold = 150;
-        int red1 = (color1  / 256 / 256) % 256, green1 = (color1 / 256) % 256, blue1 = color1 % 256,
-                red2 = (color2 / 256 / 256) % 256, green2 = (color2 / 256) % 256, blue2 = color2 % 256;
-        return (Math.abs(Color.red(color1) - Color.red(color2)) + Math.abs(Color.green(color1) - Color.green(color2)) + Math.abs(Color.blue(color1) - Color.blue(color2)) > threshold)?true:false;
 
+    void deleteEyes(Bitmap bitmap, Face face) {
+        int refX = (int)leftCheekX(face);
+        int refY = (int)leftCheekY(face);
+        int refSize = 50;
+        double threshold = 50;
+        wipePixels(bitmap, (int) leftEyeBorder(face), (int) topEyeBorder(face), (int) eyeWidth(face), (int) eyeHeight(face), refX - refSize / 2, refY - refSize / 2, refSize, refSize, threshold);
     }
-    int averageColor(int leftColor,int topColor,int rightColor,int downColor,float leftDistance,float topDistance,float rightDistance,float downDistance){
-        float minDistance = 1f / leftDistance + 1f / rightDistance + 1f / topDistance + 1f / downDistance,alpha,red,green,blue;
 
-        alpha = ((float)Color.alpha(leftColor) / leftDistance + (float)Color.alpha(rightColor) / rightDistance + (float)Color.alpha(topColor) / topDistance + (float)Color.alpha(downColor) / downDistance) / minDistance;
-        red = ((float)Color.red(leftColor) / leftDistance + (float)Color.red(rightColor) / rightDistance + (float)Color.red(topColor) / topDistance + (float)Color.red(downColor) / downDistance) / minDistance;
-        green = ((float)Color.green(leftColor) / leftDistance + (float)Color.green(rightColor) / rightDistance + (float)Color.green(topColor) / topDistance + (float)Color.green(downColor) / downDistance) / minDistance;
-        blue = ((float)Color.blue(leftColor) / leftDistance + (float)Color.blue(rightColor) / rightDistance + (float)Color.blue(topColor) / topDistance + (float)Color.blue(downColor) / downDistance) / minDistance;
-        return Color.argb((int)alpha,(int)red,(int)green,(int)blue);
+    void extractEyes(Bitmap bmp, Face face1, Face face2) {
+        int eyeLeft1 = (int)leftEyeBorder(face1);
+        int eyeTop1 = (int)topEyeBorder(face1);
+        int eyeWidth1 = (int)eyeWidth(face1);
+        int eyeHeight1 = (int)eyeHeight(face1);
+
+        int eyeLeft2 = (int)leftEyeBorder(face2);
+        int eyeTop2 = (int)topEyeBorder(face2);
+        int eyeWidth2 = (int)eyeWidth(face2);
+        int eyeHeight2 = (int)eyeHeight(face2);
+
+        int leftEyeX = (int)((leftEyeX(face1) - eyeLeft1) / eyeWidth1 * eyeWidth2);
+        int rightEyeX = (int)((rightEyeX(face1) - eyeLeft1) / eyeWidth1 * eyeWidth2);
+
+        // 2d double gaussian weighting
+        /*float[] gauss1 = gaussian(eyeWidth2, leftEyeX, eyeWidth2 / 10);
+        float[] gauss2 = gaussian(eyeWidth2, rightEyeX, eyeWidth2 / 10);
+        float[] gauss3 = gaussian(eyeHeight2, eyeHeight2 / 2, eyeHeight2 / 6);
+        float[][] gauss2d = multiplyArrays(addArrays(gauss1, gauss2, eyeWidth2), eyeWidth2, gauss3, eyeHeight2);
+        float[][] mask = new float[eyeWidth2][eyeHeight2];
+        for (int i = 0; i < eyeWidth2; i++) {
+            for (int j = 0; j < eyeHeight2; j++) {
+                mask[i][j] = 1f;
+            }
+        }*/
+
+
+
+        swapPixels(bmp, eyeLeft1, eyeTop1, eyeWidth1, eyeHeight1, eyeLeft2, eyeTop2, eyeWidth2, eyeHeight2);
     }
-    void deleteEyes(Bitmap bitmap, SparseArray<Face> faces){
-        int leftEyeBorder = (int)leftEyeBorder(faces),
-                rightEyeBorder = (int)(leftEyeBorder(faces) + eyeWidth(faces)),
-                downEyeBorder = (int)(topEyeBorder(faces) + eyeHeight(faces)),
-                topEyeBorder = (int)topEyeBorder(faces),
-                leftCheekX = (int)leftCheekX(faces),leftCheekY = (int)leftCheekY(faces),
-                averageColor,topColor,downColor,leftColor,rightColor,leftCheekColor = bitmap.getPixel(leftCheekX,leftCheekY);
 
-       for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
-            for(int y = topEyeBorder + 1;y < downEyeBorder; y++) {
-                if (isColorDifferent(bitmap, x, y, leftCheekX, leftCheekY)) {
-                    bitmap.setPixel(x, y, bitmap.getPixel(x ,y - 1));
+    void swapFace(Bitmap bmp, Face face1, Face face2) {
+        int[][] points1 = getFacePoints(face1);
+        int[][] points2 = getFacePoints(face2);
+
+        int[][] mask1 = getFaceMask(points1);
+        int[][] mask2 = getFaceMask(points2);
+        int x1 = points1[0][0];
+        int y1 = points1[1][0];
+        int width1 = points1[0][1] - x1;
+        int height1 = points1[1][4] - y1;
+        int x2 = points2[0][0];
+        int y2 = points2[1][0];
+        int width2 = points2[0][1] - x2;
+        int height2 = points2[1][4] - y2;
+
+        swapPixels(bmp, x1, y1, width1, height1, x2, y2, width2, height2, mask1, mask2);
+    }
+
+    boolean isColorEqual(int color1, int color2, double threshold) {
+        double distSquared = Math.pow(Color.red(color1) - Color.red(color2), 2) +
+                Math.pow(Color.green(color1) - Color.green(color2), 2) +
+                Math.pow(Color.blue(color1) - Color.blue(color2), 2);
+
+        return Math.sqrt(distSquared) < threshold;
+    }
+
+    void wipePixels(Bitmap bmp, int x, int y, int width, int height, int refX, int refY, int refWidth, int refHeight, double threshold) {
+        for (int i = 0; i < width; i++) {
+            int iRef = refX + (i % refWidth);
+            for (int j = 0; j < height; j++) {
+                int jRef = refY + (j % refHeight);
+                if (!isColorEqual(bmp.getPixel(x + i, y + j), bmp.getPixel(iRef, jRef), threshold)) {
+                    //bmp.setPixel(x + i, y + j, bmp.getPixel(iRef, jRef));
                 }
             }
         }
     }
-    void extractEyes(Bitmap bitmap, SparseArray<Face> faces,Bitmap bitmap2, SparseArray<Face> faces2){
-        //extract face from bitmap and put the face on the bitmap2
-        int leftEyeBorder = (int)leftEyeBorder(faces),
-                rightEyeBorder = (int)(leftEyeBorder(faces) + eyeWidth(faces)),
-                downEyeBorder = (int)(topEyeBorder(faces) + eyeHeight(faces)),
-                topEyeBorder = (int)topEyeBorder(faces),
-                leftCheekX = (int)leftCheekX(faces),leftCheekY = (int)leftCheekY(faces);
-        int leftEyeBorder2 = (int)leftEyeBorder(faces2),
-                rightEyeBorder2 = (int)(leftEyeBorder(faces2) + eyeWidth(faces2)),
-                downEyeBorder2 = (int)(topEyeBorder(faces2) + eyeHeight(faces2)),
-                topEyeBorder2 = (int)topEyeBorder(faces2),
-                leftCheekX2 = (int)leftCheekX(faces2),leftCheekY2 = (int)leftCheekY(faces2),
-                color;
-        float x2,y2;
 
-        for(int x = leftEyeBorder + 1;x < rightEyeBorder; x++){
-            for(int y = topEyeBorder + 1;y < downEyeBorder; y++){
-                if(isColorDifferent(bitmap,x,y,leftCheekX,leftCheekY)) {
-                    x2 = eyeWidth(faces2) / eyeWidth(faces) *(float) (x - leftEyeBorder) +(float)leftEyeBorder2 ;
-                    y2 = eyeHeight(faces2) / eyeHeight(faces) *(float) (y - topEyeBorder) + (float)topEyeBorder2;
-                    color = bitmap.getPixel((int)noseX(faces),(int)noseY(faces));
-                    //bitmap2.setPixel((int)x2,(int)y2,color);
+    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2) {
+        Bitmap subBmp1 = Bitmap.createBitmap(bmp, x1, y1, width1, height1);
+        subBmp1 = Bitmap.createScaledBitmap(subBmp1, width2, height2, true);
 
-                    bitmap2.setPixel((int)x2,(int)y2,bitmap.getPixel(x,y));
-                    //averageColor = bitmap.getPixel(leftCheekX,leftCheekY);
-                    //bitmap.setPixel(x,y,averageColor);
-                }
+        Bitmap subBmp2 = Bitmap.createBitmap(bmp, x2, y2, width2, height2);
+        subBmp2 = Bitmap.createScaledBitmap(subBmp2, width1, height1, true);
+
+        for (int x = 0; x < width1; x++) {
+            for (int y = 0; y < height1; y++) {
+                bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
+            }
+        }
+
+        for (int x = 0; x < width2; x++) {
+            for (int y = 0; y < height2; y++) {
+                bmp.setPixel(x + x2, y + y2, subBmp1.getPixel(x, y));
             }
         }
     }
-    void deleteFace(Bitmap bitmap, SparseArray<Face> faces){
-        deleteEyes(bitmap, faces);
+
+    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2, int[][] mask1, int[][] mask2) {
+        Bitmap subBmp1 = Bitmap.createBitmap(bmp, x1, y1, width1, height1);
+        subBmp1 = Bitmap.createScaledBitmap(subBmp1, width2, height2, true);
+
+        Bitmap subBmp2 = Bitmap.createBitmap(bmp, x2, y2, width2, height2);
+        subBmp2 = Bitmap.createScaledBitmap(subBmp2, width1, height1, true);
+
+        for (int x = 0; x < width1; x++) {
+            for (int y = 0; y < height1; y++) {
+                //if (mask1[x + x1][y + y1] == 1)
+                bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
+            }
+        }
+
+        for (int x = 0; x < width2; x++) {
+            for (int y = 0; y < height2; y++) {
+                //if (mask2[x + x2][y + y2] == 1)
+                bmp.setPixel(x + x2, y + y2, subBmp1.getPixel(x, y));
+            }
+        }
+    }
+
+    void replacePixels(Bitmap bmp, int xSrc, int ySrc, int widthSrc, int heightSrc, int xDes, int yDes, int widthDes, int heightDes, float[][] weightMatrix, float[][] mask, float threshold) {
+        Bitmap subBmp = Bitmap.createBitmap(bmp, xSrc, ySrc, widthSrc, heightSrc);
+        subBmp = Bitmap.createScaledBitmap(subBmp, widthDes, heightDes, false);
+
+        for (int x = 0; x < widthDes; x++) {
+            for (int y = 0; y < heightDes; y++) {
+                int xAbsolute = x + xDes;
+                int yAbsolute = y + yDes;
+                bmp.setPixel(xAbsolute, yAbsolute, subBmp.getPixel(x, y));
+
+                /*int color1 = subBmp.getPixel(x, y);
+                int color2 = bmp.getPixel(xAbsolute, yAbsolute);
+
+                float weight = weightMatrix[x][y] * mask[x][y];
+                if (!isColorEqual(color1, color2, threshold)) {
+                    bmp.setPixel(xDes, yDes, color1);
+                } else {
+                    bmp.setPixel(xDes, yDes, combineColors(color1, weight, color2, 1 - weight));
+                }*/
+            }
+        }
+    }
+
+    float[] gaussian(int size, int mean, float sigma) {
+        float[] array = new float[size];
+        for (int i = 0; i < size; i++) {
+            array[i] = (float)Math.exp(-Math.pow(mean - i, 2) / (2*Math.pow(sigma, 2)));
+        }
+        return array;
+    }
+
+    float[] addArrays(float[] array1, float[] array2, int size) {
+        float[] newArray = new float[size];
+        for (int i = 0; i < size; i++) {
+            newArray[i] = array1[i] + array2[i];
+        }
+        return newArray;
+    }
+
+    float[][] multiplyArrays(float[] arrayX, int sizeX, float[] arrayY, int sizeY) {
+        float[][] newArray = new float[sizeX][sizeY];
+        for (int i = 0; i < sizeX; i++) {
+            for (int j = 0; j < sizeY; j++) {
+                newArray[i][j] = arrayX[i] * arrayY[j];
+            }
+        }
+        return newArray;
+    }
+
+    double euclideanDistance(int x1, int y1, int x2, int y2) {
+        return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
+    }
+
+    int combineColors(int color1, float weight1, int color2, float weight2) {
+        int red = (int) ((Color.red(color1) * weight1 + Color.red(color2) * weight2) / (weight1+weight2));
+        int green = (int) ((Color.green(color1) * weight1 + Color.green(color2) * weight2) / (weight1+weight2));
+        int blue = (int)((Color.blue(color1) * weight1 + Color.blue(color2) * weight2) / (weight1+weight2));
+
+        return Color.rgb(red, green, blue);
+    }
+
+    void deleteFace(Bitmap bitmap, Face face){
+        deleteEyes(bitmap, face);
         //deleteNoseAndMouth(bitmap,faces);
     }
     void deleteNoseAndMouth(Bitmap bitmap, SparseArray<Face> faces) {
@@ -297,29 +470,11 @@ public class ModifiedFaceView extends View implements Runnable{
         canvas.save();
         canvas.scale(mScaleFactor, mScaleFactor);
 
-//        if((translateX * -1) < 0) {
-//            translateX = 0;
-//        } else if ((translateX * -1) > (scaleFactor - 1) * canvas.getWidth()) {
-//            translateX = (1 - scaleFactor) * canvas.getWidth();
-//        }
-//
-//        if(translateY * -1 < 0) {
-//            translateY = 0;
-//        } else if((translateY * -1) > (scaleFactor - 1) * canvas.getHeight()) {
-//            translateY = (1 - scaleFactor) * canvas.getHeight();
-//        }
-
-//        translateX = (translateX * -1) < 0 ? 0 : translateX;
-//        translateY = (translateY * -1) < 0 ? 0 : translateY;
-
         canvas.translate(translateX / scaleFactor, translateY / scaleFactor);
-        //canvas.clipRect(mContentRect);
 
-        if ((mBitmap != null) && (mFaces != null ) && (mBitmap2 != null) && (mFaces2 != null)) {
+        if (bmp != null && faces != null) {
             double scale = drawBitmap(canvas);
             //drawFaceAnnotations(canvas, scale);
-            //Bitmap resizedbitmap=Bitmap.createBitmap(bitmap, 0,0,(int)faces.valueAt(0).getLandmarks().get(0).getPosition().x,(int)faces.valueAt(0).getLandmarks().get(0).getPosition().y);
-
         }
         canvas.restore();
     }
@@ -383,40 +538,12 @@ public class ModifiedFaceView extends View implements Runnable{
     private double drawBitmap(Canvas canvas) {
         double viewWidth = canvas.getWidth();
         double viewHeight = canvas.getHeight();
-        double imageWidth = mBitmap.getWidth();
-        double imageHeight = mBitmap.getHeight();
+        double imageWidth = bmp.getWidth();
+        double imageHeight = bmp.getHeight();
         double scale = Math.min(viewWidth / imageWidth, viewHeight / imageHeight);
 
-        //Rect destBounds = new Rect(0, 0, (int)(imageWidth * scale / 2), (int)(imageHeight * scale / 2));
-        //Rect destBounds = new Rect(0, 0, (int)(mFaces.valueAt(0).getLandmarks().get(0).getPosition().x * scale), (int)(mFaces.valueAt(0).getLandmarks().get(0).getPosition().y * scale));
-
-        //Bitmap resizedbitmap=Bitmap.createBitmap(mBitmap, (int)leftBorder, (int)upperborder , (int)width,(int)height);
-        //Bitmap resizedbitmap=Bitmap.createBitmap(mBitmap, (int)leftBorder,(int)upperborder, (int)rightBorder,(int)lowerborder);
-
-        //canvas.drawBitmap(resizedbitmap,0,0,null);
-        //canvas.drawBitmap(resizedbitmap,null,destBounds,null);
-        //canvas.drawBitmap(mBitmap, null, destBounds, null);
-
-        //do the same thing for mBitmap2
-        double imageWidth2 = mBitmap2.getWidth();
-        double imageHeight2 = mBitmap2.getHeight();
-        double scale2 = Math.min(viewWidth / imageWidth2, viewHeight / imageHeight2);
-
-        //Rect destBounds2 = new Rect(0, 0, (int)(imageWidth2 * scale / 2), (int)(imageHeight2 * scale / 2));
-        //Rect destBounds = new Rect(0, 0, (int)(mFaces.valueAt(0).getLandmarks().get(0).getPosition().x * scale), (int)(mFaces.valueAt(0).getLandmarks().get(0).getPosition().y * scale));
-
-       /* Bitmap mutableBitmap = ModifiedFaceView.convertToMutable(Bitmap.createBitmap(mBitmap2));
-        deleteFace(mutableBitmap,mFaces2);
-        extractEyes(mBitmap,mFaces,mutableBitmap,mFaces2);*/
-        Bitmap resizedbitmap = Bitmap.createBitmap(mBitmap, (int)leftEyeBorder(mFaces), (int)topEyeBorder(mFaces) , (int)eyeWidth(mFaces),(int)eyeHeight(mFaces));
-        //Bitmap resizedbitmap=Bitmap.createBitmap(mBitmap, (int)leftBorder,(int)upperborder, (int)rightBorder,(int)lowerborder);
-        Rect destBounds = new Rect(0, 0, (int)(imageWidth2 * scale2 ), (int)(imageHeight2 * scale2 ));
-        Rect destBounds2 = new Rect((int)(leftEyeBorder(mFaces2) * scale2), (int)(topEyeBorder(mFaces2) * scale2), (int)((leftEyeBorder(mFaces2) + eyeWidth(mFaces2)) * scale2), (int)((topEyeBorder(mFaces2) + eyeHeight(mFaces2)) * scale2));
-
-        //canvas.drawBitmap(resizedbitmap,0,0,null);
-        canvas.drawBitmap(finalBitmap, null, destBounds, null);
-        //canvas.drawBitmap(resizedbitmap,null,destBounds2,null);
-        //canvas.drawBitmap(mBitmap2, null, destBounds, null);
+        Rect destBounds = new Rect(0, 0, (int)(imageWidth * scale ), (int)(imageHeight  * scale ));
+        canvas.drawBitmap(bmp, null, destBounds, null);
         return scale;
     }
 
@@ -434,8 +561,8 @@ public class ModifiedFaceView extends View implements Runnable{
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(5);
 
-        for (int i = 0; i < mFaces.size(); ++i) {
-            Face face = mFaces.valueAt(i);
+        for (int i = 0; i < faces.size(); ++i) {
+            Face face = faces.valueAt(i);
             for (Landmark landmark : face.getLandmarks()) {
                 int cx = (int) (landmark.getPosition().x * scale);
                 int cy = (int) (landmark.getPosition().y * scale);
@@ -443,30 +570,25 @@ public class ModifiedFaceView extends View implements Runnable{
             }
         }
     }
-    public void getPhotosAndFaces(Bitmap bitmap, SparseArray<Face> faces,Bitmap bitmap2,SparseArray<Face> faces2) {
-        mBitmap = bitmap;
-        mFaces = faces;
 
-        mBitmap2 = bitmap2;
-        mFaces2 = faces2;
+    public void setBitmap(Bitmap bmp) {
+        this.bmp = convertToMutable(bmp);
+    }
+
+    public void setFaces(SparseArray<Face> faces) {
+        this.faces = faces;
     }
 
     public void setData(ModifiedFaceView modifiedFaceView) {
-        mBitmap = modifiedFaceView.mBitmap;
-        mBitmap2 = modifiedFaceView.mBitmap2;
-        finalBitmap = modifiedFaceView.finalBitmap;
-        mFaces = modifiedFaceView.mFaces;
-        mFaces2 = modifiedFaceView.mFaces2;
+        bmp = modifiedFaceView.bmp;
+        faces = modifiedFaceView.faces;
     }
 
     @Override
     public void run() {
-        //finalBitmap = Bitmap.createBitmap(mBitmap2);
-        //finalBitmap = ModifiedFaceView.convertToMutable(finalBitmap);
-        finalBitmap = mBitmap2.copy(mBitmap2.getConfig(),true);
-        deleteFace(finalBitmap,mFaces2);
-
-        extractEyes(mBitmap,mFaces,finalBitmap,mFaces2);
+        //deleteFace(bmp, faces.valueAt(0));
+        //extractEyes(bmp, faces.valueAt(0), faces.valueAt(1));
+        swapFace(bmp, faces.valueAt(0), faces.valueAt(1));
     }
 
     private class ScaleListener
@@ -482,48 +604,6 @@ public class ModifiedFaceView extends View implements Runnable{
             return true;
         }
     }
-
-//    private final GestureDetector.SimpleOnGestureListener mGestureListener
-//            = new GestureDetector.SimpleOnGestureListener() {
-//
-//        @Override
-//        public boolean onScroll(MotionEvent e1, MotionEvent e2,
-//                                float distanceX, float distanceY) {
-//            // Scrolling uses math based on the viewport (as opposed to math using pixels).
-//
-//            // Pixel offset is the offset in screen pixels, while viewport offset is the
-//            // offset within the current viewport.
-//            float viewportOffsetX = distanceX * mCurrentViewport.width()
-//                    / mContentRect.width();
-//            float viewportOffsetY = -distanceY * mCurrentViewport.height()
-//                    / mContentRect.height();
-//
-//            // Updates the viewport, refreshes the display.
-//            setViewportBottomLeft(
-//                    mCurrentViewport.left + viewportOffsetX,
-//                    mCurrentViewport.bottom + viewportOffsetY);
-//
-//            return true;
-//        }
-//    };
-
-    /**
-     * Sets the current viewport (defined by mCurrentViewport) to the given
-     * X and Y positions. Note that the Y value represents the topmost pixel position,
-     * and thus the bottom of the mCurrentViewport rectangle.
-     */
-//    private void setViewportBottomLeft(float x, float y) {
-//
-//        float curWidth = mCurrentViewport.width();
-//        float curHeight = mCurrentViewport.height();
-//        x = Math.max(AXIS_X_MIN, Math.min(x, AXIS_X_MAX - curWidth));
-//        y = Math.max(AXIS_Y_MIN + curHeight, Math.min(y, AXIS_Y_MAX));
-//
-//        mCurrentViewport.set(x, y - curHeight, x + curWidth, y);
-//
-//        // Invalidates the View to update the display.
-//        ViewCompat.postInvalidateOnAnimation(this);
-//    }
 }
 
 
