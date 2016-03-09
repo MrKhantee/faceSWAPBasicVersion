@@ -19,6 +19,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
 
 import com.google.android.gms.vision.face.Face;
 
@@ -32,7 +34,7 @@ class FaceGraphic extends GraphicOverlay.Graphic {
     private static final float ID_Y_OFFSET = 50.0f;
     private static final float ID_X_OFFSET = -50.0f;
     private static final float BOX_STROKE_WIDTH = 5.0f;
-    private static Bitmap rabbitEar, redNose;
+    private static Bitmap rabbitEar, mask;
     private FaceTrackerActivity activity;
 
     private static final int COLOR_CHOICES[] = {
@@ -71,8 +73,8 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         mBoxPaint.setColor(selectedColor);
         mBoxPaint.setStyle(Paint.Style.STROKE);
         mBoxPaint.setStrokeWidth(BOX_STROKE_WIDTH);
-        //load redNose, etc.
-        this.redNose = overlay.getFaceTrackerActivity().redNose;
+        //load mask, etc.
+        this.mask = overlay.getFaceTrackerActivity().mask;
     }
 
     void setId(int id) {
@@ -99,57 +101,15 @@ class FaceGraphic extends GraphicOverlay.Graphic {
             return;
         }
 
-        // Draws a circle at the position of the detected face, with the face's track id below.
         float x = translateX(face.getPosition().x + face.getWidth() / 2);
-        float y = translateY(face.getPosition().y + face.getHeight() / 2);
-        canvas.drawCircle(x, y, FACE_POSITION_RADIUS, mFacePositionPaint);
-        //try: draw a mask
+        float y = translateY(face.getPosition().y + face.getHeight() * 0.7f);
+        float width = face.getWidth() * 0.9f;
+        float height = width * 1.188f;
+        int left = (int)(x - width / 2);
+        int right = (int)(x + width / 2);
+        int top = (int)(y - height / 2);
+        int bottom = (int)(y + height / 2);
 
-        canvas.drawText("id: " + mFaceId, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
-        canvas.drawText("happiness: " + String.format("%.2f", face.getIsSmilingProbability()), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
-        canvas.drawText("right eye: " + String.format("%.2f", face.getIsRightEyeOpenProbability()), x + ID_X_OFFSET * 2, y + ID_Y_OFFSET * 2, mIdPaint);
-        canvas.drawText("left eye: " + String.format("%.2f", face.getIsLeftEyeOpenProbability()), x - ID_X_OFFSET*2, y - ID_Y_OFFSET*2, mIdPaint);
-
-        // Draws a bounding box around the face.
-        float xOffset = scaleX(face.getWidth() / 2.0f);
-        float yOffset = scaleY(face.getHeight() / 2.0f);
-        float left = x - xOffset;
-        float top = y - yOffset;
-        float right = x + xOffset;
-        float bottom = y + yOffset;
-        canvas.drawRect(left, top, right, bottom, mBoxPaint);
-        //canvas.drawBitmap(redNose,left,top,null);
-
-        //scale
-
-
-        //drawNose(canvas, redNose, face,left,top);
-    }
-    void drawNose(Canvas canvas, Bitmap bitmap,Face face,float left,float top){
-        //scale
-       double viewWidth = canvas.getWidth();
-        double viewHeight = canvas.getHeight();
-        double imageWidth = bitmap.getWidth();
-        double imageHeight = bitmap.getHeight();
-        double scale = Math.min(viewWidth / imageWidth, viewHeight / imageHeight);
-
-        //Landmark landmark = face.getLandmarks().get(2);
-        /*int cx = (int) (landmark.getPosition().x * scale);
-        int cy = (int) (landmark.getPosition().y * scale);*/
-        //rotate the bitmap according to the face rotation
-        //face.getEulerY()  face.getEulerZ()
-        //Canvas canvas1 = new Canvas(redNose);
-        //Matrix matrix = new Matrix();
-        //matrix.setRotate(face.getEulerY());
-        //matrix.setTranslate(cx, cy);
-
-
-        //draw the nose ont the face
-        canvas.drawBitmap(redNose,left,top,null);
-        //canvas.drawBitmap(redNose,cx,cy,null);
-        //canvas.drawBitmap(redNose, matrix, null);
-    }
-    void drawEar(Canvas canvas, Bitmap bitmap){
-        canvas.drawBitmap(bitmap, 0, 0, null);
+        canvas.drawBitmap(mask, null, new Rect(left, top, right, bottom), null);
     }
 }
