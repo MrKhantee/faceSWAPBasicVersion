@@ -77,14 +77,11 @@ public class FaceView extends View {
 
         for (int i = 0; i < mFaces.size(); ++i) {
             Face face = mFaces.valueAt(i);
-            /*for (Landmark landmark : face.getLandmarks()) {
+            for (Landmark landmark : face.getLandmarks()) {
                 int cx = (int) (landmark.getPosition().x * scale);
                 int cy = (int) (landmark.getPosition().y * scale);
                 canvas.drawCircle(cx, cy, 10, paint);
-            }*/Landmark landmark = face.getLandmarks().get(2);
-            int cx = (int) (landmark.getPosition().x * scale);
-            int cy = (int) (landmark.getPosition().y * scale);
-            canvas.drawCircle(cx, cy, 10, paint);
+            }
         }
     }
 }

@@ -50,11 +50,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    public void takePicture(View view) {
-        dispatchTakePictureIntent();
-    }
+
     private void dispatchTakePictureIntent() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        /*Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
         //Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -76,7 +74,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast toast = Toast.makeText(MainActivity.this, photoFile.toString(),  Toast.LENGTH_SHORT);
                 toast.show();
             }
-        }
+        }*/
+        Intent intent = new Intent(this, FaceTrackerActivity.class);
+        startActivity(intent);
     }
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());

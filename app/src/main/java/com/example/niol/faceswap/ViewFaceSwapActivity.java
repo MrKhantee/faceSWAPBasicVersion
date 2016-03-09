@@ -21,8 +21,6 @@ public class ViewFaceSwapActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_face_swap);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         modifiedFaceView = (ModifiedFaceView)findViewById(R.id.modifiedView);
         modifiedFaceView.setData(((FaceSwapApplication)getApplication()).getModifiedFaceView());
