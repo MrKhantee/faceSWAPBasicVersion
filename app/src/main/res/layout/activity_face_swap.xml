@@ -29,7 +29,8 @@
             android:layout_toLeftOf="@+id/buttongeneratemodifiedphoto"
             android:layout_toStartOf="@+id/buttongeneratemodifiedphoto"
             android:layout_marginRight="49dp"
-            android:layout_marginEnd="49dp"/>
+            android:layout_marginEnd="49dp"
+            android:background="@drawable/round_button" />
 
         <Button
             android:layout_width="wrap_content"
