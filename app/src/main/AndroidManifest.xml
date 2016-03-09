@@ -44,10 +44,12 @@
             android:name=".FaceSwapActivity"
             android:screenOrientation="portrait"/>
         <activity
+            android:name=".livedetect.CameraActivity"
+            android:screenOrientation="portrait"/>
+        <activity
             android:name=".WiFiDirectActivity"
             android:screenOrientation="portrait"/>
-        <activity android:name=".FaceTrackerActivity"
-                  android:screenOrientation="portrait"/>
+
         <service
             android:name=".FileTransferService"
             android:enabled="true"/>

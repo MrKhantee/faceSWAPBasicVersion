@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.niol.faceswap.livedetect.CameraActivity;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -75,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
                 toast.show();
             }
         }*/
-        Intent intent = new Intent(this, FaceTrackerActivity.class);
+        Intent intent = new Intent(this, CameraActivity.class);
         startActivity(intent);
     }
     private File createImageFile() throws IOException {
