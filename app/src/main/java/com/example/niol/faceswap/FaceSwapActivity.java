@@ -3,16 +3,13 @@ package com.example.niol.faceswap;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -21,15 +18,13 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
-import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class FaceSwapActivity extends AppCompatActivity {
     private static final String TAG = "faceSwapActivity";
     static final int PICK_FACE_IMAGE_REQUEST = 1;
     static final int REQUEST_TAKE_PHOTO = 2;
+    static final int REQUEST_SWAP = 3;
     private Bitmap bmp;
     private Detector<Face> safeDetector;
     private FaceDetector detector;
@@ -69,7 +64,7 @@ public class FaceSwapActivity extends AppCompatActivity {
                     if (faces.size() >= 2) {
                         modifyPhoto();
                         Intent intent = new Intent(getApplicationContext(), ViewFaceSwapActivity.class);
-                        startActivity(intent);
+                        startActivityForResult(intent, REQUEST_SWAP);
                     } else {
                         Toast.makeText(FaceSwapActivity.this, "Error: No faces detected",
                                 Toast.LENGTH_SHORT).show();

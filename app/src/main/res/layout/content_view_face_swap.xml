@@ -9,6 +9,7 @@
     android:paddingLeft="0dp"
     android:paddingRight="0dp"
     android:paddingTop="0dp"
+    android:background="@color/black"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.example.niol.faceswap.ViewFaceSwapActivity"
     tools:showIn="@layout/activity_view_face_swap">
@@ -17,12 +18,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:layout_gravity="center_horizontal"
+        android:layout_gravity="center_vertical"
         android:id="@+id/modifiedView"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
+        android:layout_marginTop="150dp"
+        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"></com.example.niol.faceswap.ModifiedFaceView>
 
     <Button
