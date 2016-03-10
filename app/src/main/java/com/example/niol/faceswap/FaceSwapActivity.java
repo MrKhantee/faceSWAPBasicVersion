@@ -105,14 +105,14 @@ public class FaceSwapActivity extends AppCompatActivity {
     }
 
     private void takePicture(int imageRequest) {
-        //try {
-            //File tempFile = File.createTempFile("my_app", ".jpg");
-            //String fileName = tempFile.getAbsolutePath();
-            //Uri uri = Uri.fromFile(tempFile);
+        try {
+            File tempFile = File.createTempFile("my_app", ".jpg");
+            imageUri = tempFile.getAbsolutePath();
+            Uri uri = Uri.fromFile(tempFile);
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            //intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
             startActivityForResult(intent, imageRequest);
-        //} catch(IOException ex) {}
+        } catch(IOException ex) {}
     }
 
     private File createImageFile() throws IOException {
@@ -128,9 +128,9 @@ public class FaceSwapActivity extends AppCompatActivity {
 
         if (requestCode == REQUEST_TAKE_PHOTO) {
             if (resultCode == RESULT_OK && imageReturnedIntent != null) {
-                Uri uri = imageReturnedIntent.getData();
-                Log.d("faceswap", "image uri: " + uri.toString());
-                //Uri uri = Uri.parse(imageUri);
+                //Uri uri = imageReturnedIntent.getData();
+                Log.d("faceswap", "image uri: " + imageUri);
+                Uri uri = Uri.parse(imageUri);
                 getContentResolver();
                 try {
                     bmp = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
@@ -140,21 +140,25 @@ public class FaceSwapActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                if (!safeDetector.isOperational()) {
+                    Log.w(TAG, "Face detector dependencies are not yet available.");
 
-            }
-            if (!safeDetector.isOperational()) {
-                Log.w(TAG, "Face detector dependencies are not yet available.");
+                    // Check for low storage.  If there is low storage, the native library will not be
+                    // downloaded, so detection will not become operational.
+                    IntentFilter lowstorageFilter = new IntentFilter(Intent.ACTION_DEVICE_STORAGE_LOW);
+                    boolean hasLowStorage = registerReceiver(null, lowstorageFilter) != null;
 
-                // Check for low storage.  If there is low storage, the native library will not be
-                // downloaded, so detection will not become operational.
-                IntentFilter lowstorageFilter = new IntentFilter(Intent.ACTION_DEVICE_STORAGE_LOW);
-                boolean hasLowStorage = registerReceiver(null, lowstorageFilter) != null;
-
-                if (hasLowStorage) {
-                    Toast.makeText(this, R.string.low_storage_error, Toast.LENGTH_LONG).show();
-                    Log.w(TAG, getString(R.string.low_storage_error));
+                    if (hasLowStorage) {
+                        Toast.makeText(this, R.string.low_storage_error, Toast.LENGTH_LONG).show();
+                        Log.w(TAG, getString(R.string.low_storage_error));
+                    }
                 }
             }
+            else if (resultCode == RESULT_CANCELED) {
+                Log.d("faceswap", "image return cancelled!");
+                Log.d("faceswap", "image uri: " + imageUri);
+            }
+
         }
         else if (requestCode == PICK_FACE_IMAGE_REQUEST) {
             if (resultCode == RESULT_OK && imageReturnedIntent != null && imageReturnedIntent.getData() != null) {
