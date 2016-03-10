@@ -5,6 +5,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -19,36 +20,52 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class FaceSwapActivity extends AppCompatActivity {
     private static final String TAG = "faceSwapActivity";
     static final int PICK_FACE_IMAGE_REQUEST = 1;
+    static final int REQUEST_TAKE_PHOTO = 2;
     private Bitmap bmp;
     private Detector<Face> safeDetector;
     private FaceDetector detector;
     private SparseArray<Face> faces;
     private FaceView faceView;
+    private String imageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_face_swap);
+        faceView = (FaceView) findViewById(R.id.faceView);
+
+        if (savedInstanceState != null)
+            imageUri = savedInstanceState.getString("imageUri");
+
         detector = new FaceDetector.Builder(getApplicationContext())
                 .setTrackingEnabled(false)
                 .setLandmarkType(FaceDetector.ALL_LANDMARKS)
                 .build();
         ((FaceSwapApplication)getApplication()).setModifiedFaceView((ModifiedFaceView)findViewById(R.id.modifiedView));
-
-        // temporary init, make test easier
         safeDetector = new SafeFaceDetector(detector);
-        final Button buttonFacePhoto = (Button) findViewById(R.id.buttonfacePhoto);
-        faceView = (FaceView) findViewById(R.id.faceView);
 
-        buttonFacePhoto.setOnClickListener(new View.OnClickListener() {
+
+        final Button buttonChoosePicture = (Button) findViewById(R.id.buttonChoosePicture);
+        buttonChoosePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 selectPicture(PICK_FACE_IMAGE_REQUEST);
+            }
+        });
+
+        final Button buttonTakePicture = (Button) findViewById(R.id.buttonTakePicture);
+        buttonTakePicture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePicture(REQUEST_TAKE_PHOTO);
             }
         });
 
@@ -87,11 +104,59 @@ public class FaceSwapActivity extends AppCompatActivity {
         startActivityForResult(getIntent, imageRequest);
     }
 
+    private void takePicture(int imageRequest) {
+        //try {
+            //File tempFile = File.createTempFile("my_app", ".jpg");
+            //String fileName = tempFile.getAbsolutePath();
+            //Uri uri = Uri.fromFile(tempFile);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            //intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+            startActivityForResult(intent, imageRequest);
+        //} catch(IOException ex) {}
+    }
+
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "swapped_" + timeStamp + ".jpg";
+        File photo = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/faceswap",  imageFileName);
+        return photo;
+    }
+
     protected void onActivityResult(int requestCode, int resultCode,
                                     Intent imageReturnedIntent) {
         super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
 
-        if (requestCode == PICK_FACE_IMAGE_REQUEST) {
+        if (requestCode == REQUEST_TAKE_PHOTO) {
+            if (resultCode == RESULT_OK && imageReturnedIntent != null) {
+                Uri uri = imageReturnedIntent.getData();
+                Log.d("faceswap", "image uri: " + uri.toString());
+                //Uri uri = Uri.parse(imageUri);
+                getContentResolver();
+                try {
+                    bmp = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
+                    Frame frame = new Frame.Builder().setBitmap(bmp).build();
+                    faces = safeDetector.detect(frame);
+                    faceView.setContent(bmp, faces);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            if (!safeDetector.isOperational()) {
+                Log.w(TAG, "Face detector dependencies are not yet available.");
+
+                // Check for low storage.  If there is low storage, the native library will not be
+                // downloaded, so detection will not become operational.
+                IntentFilter lowstorageFilter = new IntentFilter(Intent.ACTION_DEVICE_STORAGE_LOW);
+                boolean hasLowStorage = registerReceiver(null, lowstorageFilter) != null;
+
+                if (hasLowStorage) {
+                    Toast.makeText(this, R.string.low_storage_error, Toast.LENGTH_LONG).show();
+                    Log.w(TAG, getString(R.string.low_storage_error));
+                }
+            }
+        }
+        else if (requestCode == PICK_FACE_IMAGE_REQUEST) {
             if (resultCode == RESULT_OK && imageReturnedIntent != null && imageReturnedIntent.getData() != null) {
 
                 Uri uri = imageReturnedIntent.getData();
@@ -128,5 +193,12 @@ public class FaceSwapActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle bundle)
+    {
+        super.onSaveInstanceState(bundle);
+        bundle.putString("imageUri", imageUri);
     }
 }

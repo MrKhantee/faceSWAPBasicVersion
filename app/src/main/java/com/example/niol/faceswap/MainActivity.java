@@ -66,11 +66,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void selectPicture(View view) {
-        Intent intent = new Intent(this, NonTrackingCameraActivity.class);
-        startActivity(intent);
-        /*Intent intent = new Intent(this, FaceSwapActivity.class);
+        Intent intent = new Intent(this, FaceSwapActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        startActivity(intent);*/
+        startActivity(intent);
 
     }
 

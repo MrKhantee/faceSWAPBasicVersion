@@ -44,9 +44,6 @@
             android:name=".FaceSwapActivity"
             android:screenOrientation="portrait"/>
         <activity
-            android:name=".NonTrackingCameraActivity"
-            android:screenOrientation="portrait"/>
-        <activity
             android:name=".livedetect.CameraActivity"
             android:screenOrientation="portrait"/>
         <activity
