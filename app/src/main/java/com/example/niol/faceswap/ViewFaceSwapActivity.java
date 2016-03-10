@@ -1,17 +1,10 @@
 package com.example.niol.faceswap;
 
-import android.graphics.Bitmap;
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.SparseArray;
 import android.view.View;
-
-import com.google.android.gms.vision.Detector;
-import com.google.android.gms.vision.face.Face;
-import com.google.android.gms.vision.face.FaceDetector;
+import android.widget.Button;
 
 public class ViewFaceSwapActivity extends AppCompatActivity {
 
@@ -24,6 +17,19 @@ public class ViewFaceSwapActivity extends AppCompatActivity {
 
         modifiedFaceView = (ModifiedFaceView)findViewById(R.id.modifiedView);
         modifiedFaceView.setData(((FaceSwapApplication)getApplication()).getModifiedFaceView());
+
+        Button button_transfer = (Button) findViewById(R.id.button_transfer);
+        button_transfer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendPic(v);
+            }
+        });
+
+    }
+    private void sendPic (View v) {
+        Intent intent = new Intent(this, WiFiDirectActivity.class);
+        startActivity(intent);
     }
 
 
