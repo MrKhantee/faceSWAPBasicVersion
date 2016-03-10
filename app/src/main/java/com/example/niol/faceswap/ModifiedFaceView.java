@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Environment;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -74,36 +75,6 @@ public class ModifiedFaceView extends View implements Runnable{
         invalidate();
     }
 
-    int[][] getFaceMask(int[][] points) {
-        int width = bmp.getWidth();
-        int height = bmp.getHeight();
-
-        int[] x = points[0];
-        int[] y = points[1];
-
-        int[][] mask = new int[width][height];
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                mask[i][j] = 0;
-            }
-        }
-
-        for (int j = y[0]; j < y[2]; j++) {
-            for (int i = x[0]; i < x[1]; i++) {
-                mask[i][j] = 1;
-            }
-        }
-
-        for (int j = y[5]; j < y[2]; j++) {
-            double x1 = (double)(j - y[5]) / (y[4] - y[5]) * (x[4] - x[5]) + x[5];
-            double x2 = (1 - ((double)(j - y[2]) / (y[3] - y[2]))) * (x[2] - x[3]) + x[3];
-            for (int i = (int)x1; i < x2; i++) {
-                mask[i][j] = 1;
-            }
-        }
-
-        return mask;
-    }
 
     int[][] getFacePoints(Face face) {
         float[] x = new float[6];
@@ -214,14 +185,6 @@ public class ModifiedFaceView extends View implements Runnable{
         return k * (noseY(face) - leftEyeY(face));
     }
 
-    void smoothRegion(Bitmap bitmap, int left, int top, int right, int down){
-        for(int x = left; x < right; x++){
-            for(int y = top; y < down; y++){
-
-            }
-        }
-    }
-
     void deleteEyes(Bitmap bitmap, Face face) {
         int refX = (int)leftCheekX(face);
         int refY = (int)leftCheekY(face);
@@ -230,7 +193,7 @@ public class ModifiedFaceView extends View implements Runnable{
         wipePixels(bitmap, (int) leftEyeBorder(face), (int) topEyeBorder(face), (int) eyeWidth(face), (int) eyeHeight(face), refX - refSize / 2, refY - refSize / 2, refSize, refSize, threshold);
     }
 
-    void extractEyes(Bitmap bmp, Face face1, Face face2) {
+    void swapEyes(Bitmap bmp, Face face1, Face face2) {
         int eyeLeft1 = (int)leftEyeBorder(face1);
         int eyeTop1 = (int)topEyeBorder(face1);
         int eyeWidth1 = (int)eyeWidth(face1);
@@ -245,38 +208,70 @@ public class ModifiedFaceView extends View implements Runnable{
         int rightEyeX = (int)((rightEyeX(face1) - eyeLeft1) / eyeWidth1 * eyeWidth2);
 
         // 2d double gaussian weighting
-        /*float[] gauss1 = gaussian(eyeWidth2, leftEyeX, eyeWidth2 / 10);
+        float[] gauss1 = gaussian(eyeWidth2, leftEyeX, eyeWidth2 / 10);
         float[] gauss2 = gaussian(eyeWidth2, rightEyeX, eyeWidth2 / 10);
         float[] gauss3 = gaussian(eyeHeight2, eyeHeight2 / 2, eyeHeight2 / 6);
-        float[][] gauss2d = multiplyArrays(addArrays(gauss1, gauss2, eyeWidth2), eyeWidth2, gauss3, eyeHeight2);
-        float[][] mask = new float[eyeWidth2][eyeHeight2];
-        for (int i = 0; i < eyeWidth2; i++) {
-            for (int j = 0; j < eyeHeight2; j++) {
-                mask[i][j] = 1f;
-            }
-        }*/
+        float[][] gauss2d1 = multiplyArrays(addArrays(gauss1, gauss2, eyeWidth2), eyeWidth2, gauss3, eyeHeight2);
 
+        // 2d double gaussian weighting
+        gauss1 = gaussian(eyeWidth1, leftEyeX, eyeWidth1 / 10);
+        gauss2 = gaussian(eyeWidth1, rightEyeX, eyeWidth1 / 10);
+        gauss3 = gaussian(eyeHeight1, eyeHeight1 / 2, eyeHeight1 / 6);
+        float[][] gauss2d2 = multiplyArrays(addArrays(gauss1, gauss2, eyeWidth1), eyeWidth1, gauss3, eyeHeight1);
 
-
-        swapPixels(bmp, eyeLeft1, eyeTop1, eyeWidth1, eyeHeight1, eyeLeft2, eyeTop2, eyeWidth2, eyeHeight2);
+        swapPixels(bmp, eyeLeft1, eyeTop1, eyeWidth1, eyeHeight1, eyeLeft2, eyeTop2, eyeWidth2, eyeHeight2, gauss2d1, gauss2d1, 0.7f);
     }
 
     void swapFace(Bitmap bmp, Face face1, Face face2) {
         int[][] points1 = getFacePoints(face1);
         int[][] points2 = getFacePoints(face2);
 
-        int[][] mask1 = getFaceMask(points1);
-        int[][] mask2 = getFaceMask(points2);
         int x1 = points1[0][0];
         int y1 = points1[1][0];
         int width1 = points1[0][1] - x1;
         int height1 = points1[1][4] - y1;
+
         int x2 = points2[0][0];
         int y2 = points2[1][0];
         int width2 = points2[0][1] - x2;
         int height2 = points2[1][4] - y2;
 
-        swapPixels(bmp, x1, y1, width1, height1, x2, y2, width2, height2, mask1, mask2);
+        float[][] weights1 = gauss2d(width1, height1, width1 * 0.28f, height1 * 0.28f);
+        float[][] weights2 = gauss2d(width2, height2, width2 * 0.28f, height2 * 0.28f);
+
+        swapPixels(bmp, x1, y1, width1, height1, x2, y2, width2, height2, weights1, weights2, 0.11f);
+    }
+
+    void swapFace3Way(Bitmap bmp, Face face1, Face face2, Face face3) {
+        int[][] points1 = getFacePoints(face1);
+        int[][] points2 = getFacePoints(face2);
+        int[][] points3 = getFacePoints(face3);
+
+        int x1 = points1[0][0];
+        int y1 = points1[1][0];
+        int width1 = points1[0][1] - x1;
+        int height1 = points1[1][4] - y1;
+
+        int x2 = points2[0][0];
+        int y2 = points2[1][0];
+        int width2 = points2[0][1] - x2;
+        int height2 = points2[1][4] - y2;
+
+        int x3 = points3[0][0];
+        int y3 = points3[1][0];
+        int width3 = points3[0][1] - x3;
+        int height3 = points3[1][4] - y3;
+
+        float[][] weights1 = gauss2d(width1, height1, width1 * 0.28f, height1 * 0.28f);
+        float[][] weights2 = gauss2d(width2, height2, width2 * 0.28f, height2 * 0.28f);
+        float[][] weights3 = gauss2d(width3, height3, width3 * 0.28f, height3 * 0.28f);
+
+        String tag = "ModifiedFaceView";
+        Log.d(tag, "height1 = " + height1 + ", width1 = " + width1);
+        Log.d(tag, "height2 = " + height2 + ", width2 = " + width2);
+        Log.d(tag, "height3 = " + height3 + ", width3 = " + width3);
+
+        swapPixels3Way(bmp, x1, y1, width1, height1, x2, y2, width2, height2, x3, y3, width3, height3, weights1, weights2, weights3, 0.11f);
     }
 
     boolean isColorEqual(int color1, int color2, double threshold) {
@@ -293,13 +288,13 @@ public class ModifiedFaceView extends View implements Runnable{
             for (int j = 0; j < height; j++) {
                 int jRef = refY + (j % refHeight);
                 if (!isColorEqual(bmp.getPixel(x + i, y + j), bmp.getPixel(iRef, jRef), threshold)) {
-                    //bmp.setPixel(x + i, y + j, bmp.getPixel(iRef, jRef));
+                    bmp.setPixel(x + i, y + j, bmp.getPixel(iRef, jRef));
                 }
             }
         }
     }
 
-    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2) {
+    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2, float[][] weight1, float[][] weight2, float threshold) {
         Bitmap subBmp1 = Bitmap.createBitmap(bmp, x1, y1, width1, height1);
         subBmp1 = Bitmap.createScaledBitmap(subBmp1, width2, height2, true);
 
@@ -308,60 +303,80 @@ public class ModifiedFaceView extends View implements Runnable{
 
         for (int x = 0; x < width1; x++) {
             for (int y = 0; y < height1; y++) {
-                bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
+                int color1 = bmp.getPixel(x + x1, y + y1);
+                int color2 = subBmp2.getPixel(x, y);
+                if (weight1[x][y] < threshold)
+                    bmp.setPixel(x + x1, y + y1, combineColors(color2, weight1[x][y], color1, (1-weight1[x][y])));
+                else
+                    bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
             }
         }
 
         for (int x = 0; x < width2; x++) {
             for (int y = 0; y < height2; y++) {
-                bmp.setPixel(x + x2, y + y2, subBmp1.getPixel(x, y));
+                int color2 = bmp.getPixel(x + x2, y + y2);
+                int color1 = subBmp1.getPixel(x, y);
+                if (weight2[x][y] < threshold)
+                    bmp.setPixel(x + x2, y + y2, combineColors(color1, weight2[x][y], color2, (1-weight2[x][y])));
+                else
+                    bmp.setPixel(x + x2, y + y2, subBmp1.getPixel(x, y));
             }
         }
     }
 
-    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2, int[][] mask1, int[][] mask2) {
+    void swapPixels3Way(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2, int x3, int y3, int width3, int height3, float[][] weight1, float[][] weight2, float[][] weight3, float threshold) {
         Bitmap subBmp1 = Bitmap.createBitmap(bmp, x1, y1, width1, height1);
         subBmp1 = Bitmap.createScaledBitmap(subBmp1, width2, height2, true);
 
         Bitmap subBmp2 = Bitmap.createBitmap(bmp, x2, y2, width2, height2);
-        subBmp2 = Bitmap.createScaledBitmap(subBmp2, width1, height1, true);
+        subBmp2 = Bitmap.createScaledBitmap(subBmp2, width3, height3, true);
+
+        Bitmap subBmp3 = Bitmap.createBitmap(bmp, x3, y3, width3, height3);
+        subBmp3 = Bitmap.createScaledBitmap(subBmp3, width1, height1, true);
 
         for (int x = 0; x < width1; x++) {
             for (int y = 0; y < height1; y++) {
-                //if (mask1[x + x1][y + y1] == 1)
-                bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
+                int color1 = bmp.getPixel(x + x1, y + y1);
+                int color2 = subBmp2.getPixel(x, y);
+                if (weight1[x][y] < threshold)
+                    bmp.setPixel(x + x1, y + y1, combineColors(color2, weight1[x][y], color1, (1-weight1[x][y])));
+                else
+                    bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
             }
         }
 
         for (int x = 0; x < width2; x++) {
             for (int y = 0; y < height2; y++) {
-                //if (mask2[x + x2][y + y2] == 1)
-                bmp.setPixel(x + x2, y + y2, subBmp1.getPixel(x, y));
+                int color2 = bmp.getPixel(x + x2, y + y2);
+                int color3 = subBmp3.getPixel(x, y);
+                if (weight2[x][y] < threshold)
+                    bmp.setPixel(x + x2, y + y2, combineColors(color3, weight2[x][y], color2, (2-weight2[x][y])));
+                else
+                    bmp.setPixel(x + x2, y + y2, color3);
             }
         }
+
+        for (int x = 0; x < width3; x++) {
+            for (int y = 0; y < height3; y++) {
+                int color3 = bmp.getPixel(x + x3, y + y3);
+                int color1 = subBmp1.getPixel(x, y);
+                if (weight3[x][y] < threshold)
+                    bmp.setPixel(x + x3, y + y3, combineColors(color1, weight3[x][y], color3, (1-weight3[x][y])));
+                else
+                    bmp.setPixel(x + x3, y + y3, color1);
+            }
+        }
+
+        String tag = "ModifiedFaceView";
+        Log.d(tag, "height1 = " + height1 + ", width1 = " + width1);
+        Log.d(tag, "height2 = " + height2 + ", width2 = " + width2);
+        Log.d(tag, "height3 = " + height3 + ", width3 = " + width3);
     }
 
-    void replacePixels(Bitmap bmp, int xSrc, int ySrc, int widthSrc, int heightSrc, int xDes, int yDes, int widthDes, int heightDes, float[][] weightMatrix, float[][] mask, float threshold) {
-        Bitmap subBmp = Bitmap.createBitmap(bmp, xSrc, ySrc, widthSrc, heightSrc);
-        subBmp = Bitmap.createScaledBitmap(subBmp, widthDes, heightDes, false);
-
-        for (int x = 0; x < widthDes; x++) {
-            for (int y = 0; y < heightDes; y++) {
-                int xAbsolute = x + xDes;
-                int yAbsolute = y + yDes;
-                bmp.setPixel(xAbsolute, yAbsolute, subBmp.getPixel(x, y));
-
-                /*int color1 = subBmp.getPixel(x, y);
-                int color2 = bmp.getPixel(xAbsolute, yAbsolute);
-
-                float weight = weightMatrix[x][y] * mask[x][y];
-                if (!isColorEqual(color1, color2, threshold)) {
-                    bmp.setPixel(xDes, yDes, color1);
-                } else {
-                    bmp.setPixel(xDes, yDes, combineColors(color1, weight, color2, 1 - weight));
-                }*/
-            }
-        }
+    float[][] gauss2d(int width, int height, float sigmaX, float sigmaY) {
+        float[] gaussX = gaussian(width, width / 2, sigmaX);
+        float[] gaussY = gaussian(height, height / 2, sigmaY);
+        return multiplyArrays(gaussX, width, gaussY, height);
     }
 
     float[] gaussian(int size, int mean, float sigma) {
@@ -390,9 +405,6 @@ public class ModifiedFaceView extends View implements Runnable{
         return newArray;
     }
 
-    double euclideanDistance(int x1, int y1, int x2, int y2) {
-        return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
-    }
 
     int combineColors(int color1, float weight1, int color2, float weight2) {
         int red = (int) ((Color.red(color1) * weight1 + Color.red(color2) * weight2) / (weight1+weight2));
@@ -402,21 +414,12 @@ public class ModifiedFaceView extends View implements Runnable{
         return Color.rgb(red, green, blue);
     }
 
-    void deleteFace(Bitmap bitmap, Face face){
-        deleteEyes(bitmap, face);
-        //deleteNoseAndMouth(bitmap,faces);
-    }
-    void deleteNoseAndMouth(Bitmap bitmap, SparseArray<Face> faces) {
-        //int leftEyeBorder =
-        //deleteRegion(bitmap,leftEyeBorder,topEyeBorder)
-    }
-
     /************************************************************************/
     // for zooming and dragging                                             //
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         // Let the ScaleGestureDetector inspect all events.
-        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
+        /*switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mode = DRAG;
                 startX = ev.getX() - previousTranslateX;
@@ -455,7 +458,7 @@ public class ModifiedFaceView extends View implements Runnable{
         //DRAG and the zoom factor is not equal to 1) or if we're zooming
         if ((mode == DRAG && scaleFactor != 1f && dragged) || mode == ZOOM) {
             invalidate();
-        }
+        }*/
 
         return true;
     }
@@ -586,9 +589,21 @@ public class ModifiedFaceView extends View implements Runnable{
 
     @Override
     public void run() {
-        //deleteFace(bmp, faces.valueAt(0));
-        //extractEyes(bmp, faces.valueAt(0), faces.valueAt(1));
-        swapFace(bmp, faces.valueAt(0), faces.valueAt(1));
+        try {
+            if (faces.size() == 3) {
+                swapFace(bmp, faces.valueAt(0), faces.valueAt(1));
+                swapFace(bmp, faces.valueAt(1), faces.valueAt(2));
+                //swapFace3Way(bmp, faces.valueAt(0), faces.valueAt(1), faces.valueAt(2));
+                //swapFace(bmp, faces.valueAt(0), faces.valueAt(1));
+            }
+            else {
+                swapFace(bmp, faces.valueAt(0), faces.valueAt(1));
+            }
+        }
+        catch (Exception e) {
+            Log.d("thing", e.getMessage());
+        }
+
     }
 
     private class ScaleListener

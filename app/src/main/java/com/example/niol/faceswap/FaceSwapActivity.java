@@ -62,9 +62,16 @@ public class FaceSwapActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (bmp != null) {
                     if (faces.size() >= 2) {
+                        if (faces.size() >= 3) {
+                            Toast.makeText(FaceSwapActivity.this, "Swapping 3 faces!",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                         modifyPhoto();
                         Intent intent = new Intent(getApplicationContext(), ViewFaceSwapActivity.class);
-                        startActivityForResult(intent, REQUEST_SWAP);
+                        startActivity(intent);
+                    } else if (faces.size() == 1){
+                        Toast.makeText(FaceSwapActivity.this, "Error: Only one face",
+                                Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(FaceSwapActivity.this, "Error: No faces detected",
                                 Toast.LENGTH_SHORT).show();
