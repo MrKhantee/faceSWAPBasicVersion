@@ -30,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
         //setSupportActionBar(toolbar);
 
         final Button button_take_picture = (Button) findViewById(R.id.take_picture);
-        final Button button_transfer_picture = (Button) findViewById(R.id.transfer_picture);
         final Button button_face_swap = (Button) findViewById(R.id.face_swap);
 
         button_take_picture.setOnClickListener(new View.OnClickListener() {
@@ -39,12 +38,7 @@ public class MainActivity extends AppCompatActivity {
                 dispatchTakePictureIntent();
             }
         });
-        button_transfer_picture.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Perform action on click
-                sendPicture(v);
-            }
-        });
+
         button_face_swap.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Perform action on click

@@ -45,20 +45,6 @@
                 android:layout_alignStart="@+id/take_picture"
                 android:layout_marginTop="50dp"/>
 
-            <Button
-                android:id="@+id/transfer_picture"
-                android:layout_height="50dp"
-                android:layout_width="200dp"
-                android:textAllCaps="false"
-                android:text="Send Picture over WifiP2P"
-                android:onClick="selfDestruct"
-                android:layout_gravity="center_horizontal"
-                android:layout_below="@+id/face_swap"
-                android:layout_marginTop="50dp"
-                android:background="@drawable/bg_button"
-                android:layout_alignLeft="@+id/face_swap"
-                android:layout_alignStart="@+id/face_swap" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

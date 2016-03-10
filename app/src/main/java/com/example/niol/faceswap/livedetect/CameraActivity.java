@@ -4,6 +4,7 @@
 package com.example.niol.faceswap.livedetect;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,13 +12,23 @@ import android.hardware.Camera;
 import android.hardware.Camera.Face;
 import android.hardware.Camera.FaceDetectionListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.OrientationEventListener;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
 
+import com.example.niol.faceswap.FaceSwapApplication;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 
@@ -28,6 +39,7 @@ public class CameraActivity extends Activity
 
     private Camera mCamera;
     private Bitmap mPictureBitmap;
+    ProgressDialog progress;
 
     // We need the phone orientation to correctly draw the overlay:
     private int mOrientation;
@@ -46,6 +58,7 @@ public class CameraActivity extends Activity
 
     // Draw rectangles and other fancy stuff:
     private FaceOverlayView mFaceView;
+    private String filename;
 
     // Log all errors:
     private final CameraErrorCallback mErrorCallback = new CameraErrorCallback();
@@ -204,21 +217,4 @@ public class CameraActivity extends Activity
             }
         }
     }
-
-    public Bitmap takePicture() {
-        mCamera.takePicture(null, null, mPicture);
-        return mPictureBitmap;
-    }
-
-    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
-
-        @Override
-        public void onPictureTaken (byte [] data, Camera camera) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inDither = false;
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-            mPictureBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-        }
-    };
 }

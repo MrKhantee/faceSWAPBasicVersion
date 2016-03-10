@@ -28,23 +28,9 @@
             android:id="@+id/buttonChoosePicture"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
-            android:layout_marginLeft="20dp"
+            android:layout_marginLeft="50dp"
             android:layout_marginBottom="20dp"
             android:background="@drawable/bg_button"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Take Picture"
-            android:layout_gravity="center_horizontal"
-            android:textAllCaps="false"
-            android:id="@+id/buttonTakePicture"
-            android:layout_below="@+id/faceView"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/bg_button"
-            />
 
         <Button
             android:layout_width="wrap_content"
@@ -53,7 +39,7 @@
             android:textAllCaps="false"
             android:id="@+id/buttongeneratemodifiedphoto"
             android:layout_marginBottom="20dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginRight="50dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             android:background="@drawable/bg_button"/>

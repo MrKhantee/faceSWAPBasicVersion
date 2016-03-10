@@ -4,6 +4,7 @@
 package com.example.niol.faceswap.livedetect;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -18,6 +19,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.example.niol.faceswap.FaceSwapActivity;
+import com.example.niol.faceswap.FaceSwapApplication;
 import com.example.niol.faceswap.R;
 
 /**
@@ -28,9 +31,9 @@ public class FaceOverlayView extends View {
     private Paint mPaint;
     private Paint mTextPaint;
     private Bitmap mask, glasses, currentFace;
-    private Bitmap glassesButton, glassesButtonPressed, maskButton, maskButtonPressed, cameraButton, cameraButtonPressed;
-    private boolean isGlassesButtonPressed, isMaskButtonPressed, isCameraButtonPressed;
-    private Rect glassesButtonPos, maskButtonPos, cameraButtonPos;
+    private Bitmap glassesButton, glassesButtonPressed, maskButton, maskButtonPressed;
+    private boolean isGlassesButtonPressed, isMaskButtonPressed;
+    private Rect glassesButtonPos, maskButtonPos;
 
     private int mDisplayOrientation;
     private int mOrientation;
@@ -56,14 +59,11 @@ public class FaceOverlayView extends View {
         glassesButtonPressed = BitmapFactory.decodeResource(getResources(), R.drawable.glasses_button_pressed);
         maskButton = BitmapFactory.decodeResource(getResources(), R.drawable.mask_button);
         maskButtonPressed = BitmapFactory.decodeResource(getResources(), R.drawable.mask_button_pressed);
-        cameraButton = BitmapFactory.decodeResource(getResources(), R.drawable.camera_button);
-        cameraButtonPressed = BitmapFactory.decodeResource(getResources(), R.drawable.camera_button_pressed);
 
         currentFace = mask;
 
         isGlassesButtonPressed = false;
         isMaskButtonPressed = false;
-        isCameraButtonPressed = false;
     }
 
     public void setFaces(Face[] faces) {
@@ -87,47 +87,40 @@ public class FaceOverlayView extends View {
         if (glassesButtonPos == null || maskButtonPos == null) {
             glassesButtonPos = new Rect(0, 0, glassesButton.getWidth(), glassesButton.getHeight());
             maskButtonPos = new Rect(0, 0, maskButton.getWidth(), maskButton.getHeight());
-            cameraButtonPos = new Rect(0, 0, cameraButton.getWidth(), cameraButton.getHeight());
             glassesButtonPos.offset(20, getHeight() - 20 - glassesButtonPos.height());
-            maskButtonPos.offset(20, glassesButtonPos.top - 20 - maskButton.getHeight());
-            cameraButtonPos.offset(getWidth() - 20 - cameraButtonPos.width(), getHeight() - 20 - cameraButtonPos.height());
+            maskButtonPos.offset(20 + glassesButtonPos.right, glassesButtonPos.top);
         }
 
-        if (mFaces != null && mFaces.length > 0) {
-            Matrix matrix = new Matrix();
-            Util.prepareMatrix(matrix, false, mDisplayOrientation, getWidth(), getHeight());
-            canvas.rotate(-mOrientation);
-            matrix.postRotate(mOrientation);
-            RectF rectF = new RectF();
-            Face face = mFaces[0];
-            rectF.set(face.rect);
-            float width = rectF.width();
-            float height = rectF.height();
-            float scaleY = 0.1f;
-            float scaleX = 0.2f;
-            rectF.left = rectF.left - width * scaleX;
-            rectF.top = rectF.top - height * scaleY;
-            rectF.right = rectF.right + width * scaleX;
-            rectF.bottom = rectF.bottom + height * scaleY;
-            rectF.offset(0, height * 0.05f);
-            matrix.mapRect(rectF);
-            canvas.drawBitmap(currentFace, null, rectF, mPaint);
-        }
+            if (mFaces != null && mFaces.length > 0) {
+                Matrix matrix = new Matrix();
+                Util.prepareMatrix(matrix, false, mDisplayOrientation, getWidth(), getHeight());
+                canvas.rotate(-mOrientation);
+                matrix.postRotate(mOrientation);
+                RectF rectF = new RectF();
+                Face face = mFaces[0];
+                rectF.set(face.rect);
+                float width = rectF.width();
+                float height = rectF.height();
+                float scaleY = 0.1f;
+                float scaleX = 0.2f;
+                rectF.left = rectF.left - width * scaleX;
+                rectF.top = rectF.top - height * scaleY;
+                rectF.right = rectF.right + width * scaleX;
+                rectF.bottom = rectF.bottom + height * scaleY;
+                rectF.offset(0, height * 0.05f);
+                matrix.mapRect(rectF);
+                canvas.drawBitmap(currentFace, null, rectF, mPaint);
+            }
 
-        if (isGlassesButtonPressed)
-            canvas.drawBitmap(glassesButtonPressed, null, glassesButtonPos, null);
-        else
-            canvas.drawBitmap(glassesButton, null, glassesButtonPos, null);
+            if (isGlassesButtonPressed)
+                canvas.drawBitmap(glassesButtonPressed, null, glassesButtonPos, null);
+            else
+                canvas.drawBitmap(glassesButton, null, glassesButtonPos, null);
 
-        if (isMaskButtonPressed)
-            canvas.drawBitmap(maskButtonPressed, null, maskButtonPos, null);
-        else
-            canvas.drawBitmap(maskButton, null, maskButtonPos, null);
-
-        if (isCameraButtonPressed)
-            canvas.drawBitmap(cameraButtonPressed, null, cameraButtonPos, null);
-        else
-            canvas.drawBitmap(cameraButton, null, cameraButtonPos, null);
+            if (isMaskButtonPressed)
+                canvas.drawBitmap(maskButtonPressed, null, maskButtonPos, null);
+            else
+                canvas.drawBitmap(maskButton, null, maskButtonPos, null);
 
         canvas.restore();
     }
@@ -144,11 +137,6 @@ public class FaceOverlayView extends View {
                 currentFace = mask;
                 isMaskButtonPressed = false;
             }
-
-            if (isCameraButtonPressed) {
-                takePicture();
-                isCameraButtonPressed = false;
-            }
         }
 
         else if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -159,17 +147,8 @@ public class FaceOverlayView extends View {
                 isGlassesButtonPressed = true;
             if (maskButtonPos.contains(x, y))
                 isMaskButtonPressed = true;
-            if (cameraButtonPos.contains(x, y))
-                isCameraButtonPressed = true;
         }
 
         return true;
-    }
-
-    public void takePicture() {
-        Bitmap picture = ((CameraActivity)getContext()).takePicture();
-
-        // TESTING BULLSHIT
-        currentFace = picture;
     }
 }

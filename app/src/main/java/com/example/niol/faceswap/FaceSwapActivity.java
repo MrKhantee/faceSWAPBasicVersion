@@ -3,6 +3,7 @@ package com.example.niol.faceswap;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -42,8 +43,6 @@ public class FaceSwapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_face_swap);
         faceView = (FaceView) findViewById(R.id.faceView);
 
-        if (savedInstanceState != null)
-            imageUri = savedInstanceState.getString("imageUri");
 
         detector = new FaceDetector.Builder(getApplicationContext())
                 .setTrackingEnabled(false)
@@ -61,13 +60,6 @@ public class FaceSwapActivity extends AppCompatActivity {
             }
         });
 
-        final Button buttonTakePicture = (Button) findViewById(R.id.buttonTakePicture);
-        buttonTakePicture.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                takePicture(REQUEST_TAKE_PHOTO);
-            }
-        });
 
         final Button buttonGenerateModifiedPhoto = (Button) findViewById(R.id.buttongeneratemodifiedphoto);
         buttonGenerateModifiedPhoto.setOnClickListener(new View.OnClickListener() {
@@ -102,24 +94,6 @@ public class FaceSwapActivity extends AppCompatActivity {
         Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
         getIntent.setType("image/*");
         startActivityForResult(getIntent, imageRequest);
-    }
-
-    private void takePicture(int imageRequest) {
-        try {
-            File tempFile = File.createTempFile("my_app", ".jpg");
-            imageUri = tempFile.getAbsolutePath();
-            Uri uri = Uri.fromFile(tempFile);
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-            startActivityForResult(intent, imageRequest);
-        } catch(IOException ex) {}
-    }
-
-    private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "swapped_" + timeStamp + ".jpg";
-        File photo = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/faceswap",  imageFileName);
-        return photo;
     }
 
     protected void onActivityResult(int requestCode, int resultCode,
