@@ -18,13 +18,13 @@ public class ViewFaceSwapActivity extends AppCompatActivity {
         modifiedFaceView = (ModifiedFaceView)findViewById(R.id.modifiedView);
         modifiedFaceView.setData(((FaceSwapApplication)getApplication()).getModifiedFaceView());
 
-        Button button_transfer = (Button) findViewById(R.id.button_transfer);
-        button_transfer.setOnClickListener(new View.OnClickListener() {
+        //Button button_transfer = (Button) findViewById(R.id.button_transfer);
+        /*button_transfer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendPic(v);
             }
-        });
+        });*/
 
     }
     private void sendPic (View v) {
