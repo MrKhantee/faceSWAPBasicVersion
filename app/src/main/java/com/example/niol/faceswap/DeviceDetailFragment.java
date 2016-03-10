@@ -20,7 +20,6 @@ import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -31,11 +30,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.GridView;
 import android.widget.TextView;
 
 import com.example.niol.faceswap.DeviceListFragment.DeviceActionListener;
@@ -47,7 +44,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 
 /**
  * A fragment that manages a particular peer and allows interaction with device
@@ -61,11 +57,11 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     private WifiP2pInfo info;
     ProgressDialog progressDialog = null;
 
-    private Utils utils;
-    private ArrayList<String> imagePaths = new ArrayList<String>();
-    private GridViewImageAdapter adapter;
-    private GridView gridView;
-    private int columnWidth;
+//    private Utils utils;
+//    private ArrayList<String> imagePaths = new ArrayList<String>();
+//    private GridViewImageAdapter adapter;
+//    private GridView gridView;
+//    private int columnWidth;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -77,45 +73,46 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
         mContentView = inflater.inflate(R.layout.device_detail, null);
 
-        gridView = (GridView) mContentView.findViewById(R.id.gridView);
-
-        utils = new Utils(getActivity());
-
-        // Initilizing Grid View
-        InitilizeGridLayout();
-
-        // loading all image paths from SD card
-        imagePaths = utils.getFilePaths();
-
-        // Gridview adapter
-        adapter = new GridViewImageAdapter(getActivity(), imagePaths,
-                columnWidth, this);
-
-        // setting grid view adapter
-        gridView.setAdapter(adapter);
+//        gridView = (GridView) mContentView.findViewById(R.id.gridView);
+//
+//        utils = new Utils(getActivity());
+//
+//        // Initilizing Grid View
+//        InitilizeGridLayout();
+//
+//        // loading all image paths from SD card
+//        imagePaths = utils.getFilePaths();
+//
+//        // Gridview adapter
+//        adapter = new GridViewImageAdapter(getActivity(), imagePaths,
+//                columnWidth, this);
+//
+//        // setting grid view adapter
+//        gridView.setAdapter(adapter);
 
         mContentView.findViewById(R.id.btn_connect).setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                WifiP2pConfig config = new WifiP2pConfig();
-                config.deviceAddress = device.deviceAddress;
-                config.wps.setup = WpsInfo.PBC;
-//                config.groupOwnerIntent = 0;
-                if (progressDialog != null && progressDialog.isShowing()) {
-                    progressDialog.dismiss();
-                }
-                progressDialog = ProgressDialog.show(getActivity(), "Press back to cancel",
-                        "Connecting to :" + device.deviceAddress, true, true
-//                        new DialogInterface.OnCancelListener() {
-//
-//                            @Override
-//                            public void onCancel(DialogInterface dialog) {
-//                                ((DeviceActionListener) getActivity()).cancelDisconnect();
-//                            }
-//                        }
-                        );
-                ((DeviceActionListener) getActivity()).connect(config);
+                sendDirectly();
+//                WifiP2pConfig config = new WifiP2pConfig();
+//                config.deviceAddress = device.deviceAddress;
+//                config.wps.setup = WpsInfo.PBC;
+////                config.groupOwnerIntent = 0;
+//                if (progressDialog != null && progressDialog.isShowing()) {
+//                    progressDialog.dismiss();
+//                }
+//                progressDialog = ProgressDialog.show(getActivity(), "Press back to cancel",
+//                        "Connecting to :" + device.deviceAddress, true, true
+////                        new DialogInterface.OnCancelListener() {
+////
+////                            @Override
+////                            public void onCancel(DialogInterface dialog) {
+////                                ((DeviceActionListener) getActivity()).cancelDisconnect();
+////                            }
+////                        }
+//                        );
+//                ((DeviceActionListener) getActivity()).connect(config);
 
             }
         });
@@ -129,37 +126,58 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     }
                 });
 
-        mContentView.findViewById(R.id.btn_start_client).setOnClickListener(
-                new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View v) {
-                        // Allow user to pick an image from Gallery or other
-                        // registered apps
-                        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                        intent.setType("image/*");
-                        startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE);
-                    }
-                });
+//        mContentView.findViewById(R.id.btn_start_client).setOnClickListener(
+//                new View.OnClickListener() {
+//
+//                    @Override
+//                    public void onClick(View v) {
+//                        // Allow user to pick an image from Gallery or other
+//                        // registered apps
+//                        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+//                        intent.setType("image/*");
+//                        startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE);
+//                    }
+//                });
 
         return mContentView;
     }
 
-    private void InitilizeGridLayout() {
-        Resources r = getResources();
-        float padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                AppConstant.GRID_PADDING, r.getDisplayMetrics());
-
-        columnWidth = (int) ((utils.getScreenWidth() - ((AppConstant.NUM_OF_COLUMNS + 1) * padding)) / AppConstant.NUM_OF_COLUMNS);
-
-        gridView.setNumColumns(AppConstant.NUM_OF_COLUMNS);
-        gridView.setColumnWidth(columnWidth);
-        gridView.setStretchMode(GridView.NO_STRETCH);
-        gridView.setPadding((int) padding, (int) padding, (int) padding,
-                (int) padding);
-        gridView.setHorizontalSpacing((int) padding);
-        gridView.setVerticalSpacing((int) padding);
+    private void connectDirectly() {
+        WifiP2pConfig config = new WifiP2pConfig();
+        config.deviceAddress = device.deviceAddress;
+        config.wps.setup = WpsInfo.PBC;
+//                config.groupOwnerIntent = 0;
+//        if (progressDialog != null && progressDialog.isShowing()) {
+//            progressDialog.dismiss();
+//        }
+//        progressDialog = ProgressDialog.show(getActivity(), "xxx Press back to cancel",
+//                "Connecting to :" + device.deviceAddress, true, true
+////                        ,new DialogInterface.OnCancelListener() {
+////
+////                            @Override
+////                            public void onCancel(DialogInterface dialog) {
+////                                ((DeviceActionListener) getActivity()).cancelDisconnect();
+////                            }
+////                        }
+//        );
+        ((DeviceActionListener) getActivity()).connect(config);
     }
+
+//    private void InitilizeGridLayout() {
+//        Resources r = getResources();
+//        float padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+//                AppConstant.GRID_PADDING, r.getDisplayMetrics());
+//
+//        columnWidth = (int) ((utils.getScreenWidth() - ((AppConstant.NUM_OF_COLUMNS + 1) * padding)) / AppConstant.NUM_OF_COLUMNS);
+//
+//        gridView.setNumColumns(AppConstant.NUM_OF_COLUMNS);
+//        gridView.setColumnWidth(columnWidth);
+//        gridView.setStretchMode(GridView.NO_STRETCH);
+//        gridView.setPadding((int) padding, (int) padding, (int) padding,
+//                (int) padding);
+//        gridView.setHorizontalSpacing((int) padding);
+//        gridView.setVerticalSpacing((int) padding);
+//    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -168,8 +186,8 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         // FileTransferService.
         Uri uri = data.getData();
 
-        TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
-        statusText.setText("Sending: " + uri);
+//        TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
+//        statusText.setText("Sending: " + uri);
         Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri);
         Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
         serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
@@ -207,18 +225,18 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         // server. The file server is single threaded, single connection server
         // socket.
         if (info.groupFormed && info.isGroupOwner) {
-            new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text))
-                    .execute();
+//            new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text))
+//                    .execute();
         } else if (info.groupFormed) {
             // The other device acts as the client. In this case, we enable the
             // get file button.
-            mContentView.findViewById(R.id.btn_start_client).setVisibility(View.VISIBLE);
-            ((TextView) mContentView.findViewById(R.id.status_text)).setText(getResources()
-                    .getString(R.string.client_text));
+//            mContentView.findViewById(R.id.btn_start_client).setVisibility(View.VISIBLE);
+//            ((TextView) mContentView.findViewById(R.id.status_text)).setText(getResources()
+//                    .getString(R.string.client_text));
         }
 
         // hide the connect button
-        mContentView.findViewById(R.id.btn_connect).setVisibility(View.GONE);
+//        mContentView.findViewById(R.id.btn_connect).setVisibility(View.GONE);
     }
 
     /**
@@ -234,22 +252,43 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         view = (TextView) mContentView.findViewById(R.id.device_info);
         view.setText(device.toString());
 
+        connectDirectly();
+//        sendDirectly();
+    }
+    public void sendDirectly(){
+//        Toast.makeText(getActivity(), "Inside SendDirectly",
+//                Toast.LENGTH_SHORT).show();
+
+//        Uri uri = Uri.parse("content://com.android.providers.media.documents/document/image%3A303");
+        Uri uri = Uri.parse("content://media/external/images/media/880");
+//        TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
+//        statusText.setText("Sending: " + uri);
+        Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri);
+
+        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                info.groupOwnerAddress.getHostAddress());
+        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+        getActivity().startService(serviceIntent);
+        Log.d(WiFiDirectActivity.TAG, "Intent----------- " + uri.toString());
     }
 
     /**
      * Clears the UI fields after a disconnect or direct mode disable operation.
      */
     public void resetViews() {
-        mContentView.findViewById(R.id.btn_connect).setVisibility(View.VISIBLE);
+//        mContentView.findViewById(R.id.btn_connect).setVisibility(View.VISIBLE);
         TextView view = (TextView) mContentView.findViewById(R.id.device_address);
         view.setText(R.string.empty);
         view = (TextView) mContentView.findViewById(R.id.device_info);
         view.setText(R.string.empty);
         view = (TextView) mContentView.findViewById(R.id.group_owner);
         view.setText(R.string.empty);
-        view = (TextView) mContentView.findViewById(R.id.status_text);
-        view.setText(R.string.empty);
-        mContentView.findViewById(R.id.btn_start_client).setVisibility(View.GONE);
+//        view = (TextView) mContentView.findViewById(R.id.status_text);
+//        view.setText(R.string.empty);
+//        mContentView.findViewById(R.id.btn_start_client).setVisibility(View.GONE);
         this.getView().setVisibility(View.GONE);
     }
 
@@ -268,7 +307,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
          */
         public FileServerAsyncTask(Context context, View statusText) {
             this.context = context;
-            this.statusText = (TextView) statusText;
+//            this.statusText = (TextView) statusText;
         }
 
         @Override
@@ -306,7 +345,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         @Override
         protected void onPostExecute(String result) {
             if (result != null) {
-                statusText.setText("File copied - " + result);
+//                statusText.setText("File copied - " + result);
                 Intent intent = new Intent();
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.setDataAndType(Uri.parse("file://" + result), "image/*");
@@ -321,7 +360,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
          */
         @Override
         protected void onPreExecute() {
-            statusText.setText("Opening a server socket");
+//            statusText.setText("Opening a server socket");
         }
 
     }
