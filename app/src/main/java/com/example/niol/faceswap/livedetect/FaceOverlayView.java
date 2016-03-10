@@ -96,20 +96,21 @@ public class FaceOverlayView extends View {
                 Util.prepareMatrix(matrix, false, mDisplayOrientation, getWidth(), getHeight());
                 canvas.rotate(-mOrientation);
                 matrix.postRotate(mOrientation);
-                RectF rectF = new RectF();
-                Face face = mFaces[0];
-                rectF.set(face.rect);
-                float width = rectF.width();
-                float height = rectF.height();
-                float scaleY = 0.1f;
-                float scaleX = 0.2f;
-                rectF.left = rectF.left - width * scaleX;
-                rectF.top = rectF.top - height * scaleY;
-                rectF.right = rectF.right + width * scaleX;
-                rectF.bottom = rectF.bottom + height * scaleY;
-                rectF.offset(0, height * 0.05f);
-                matrix.mapRect(rectF);
-                canvas.drawBitmap(currentFace, null, rectF, mPaint);
+                for (Face face : mFaces) {
+                    RectF rectF = new RectF();
+                    rectF.set(face.rect);
+                    float width = rectF.width();
+                    float height = rectF.height();
+                    float scaleY = 0.1f;
+                    float scaleX = 0.2f;
+                    rectF.left = rectF.left - width * scaleX;
+                    rectF.top = rectF.top - height * scaleY;
+                    rectF.right = rectF.right + width * scaleX;
+                    rectF.bottom = rectF.bottom + height * scaleY;
+                    rectF.offset(0, height * 0.05f);
+                    matrix.mapRect(rectF);
+                    canvas.drawBitmap(currentFace, null, rectF, mPaint);
+                }
             }
 
             if (isGlassesButtonPressed)

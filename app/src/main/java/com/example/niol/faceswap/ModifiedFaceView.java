@@ -150,6 +150,7 @@ public class ModifiedFaceView extends View implements Runnable{
     float noseY(Face face) {
         return face.getLandmarks().get(2).getPosition().y;
     }
+
     float leftCheekX(Face face) {
         return face.getLandmarks().get(4).getPosition().x;
     }
@@ -163,39 +164,11 @@ public class ModifiedFaceView extends View implements Runnable{
     float rightCheekY(Face face) {
         return face.getLandmarks().get(3).getPosition().y;
     }
-    float leftMouthX(Face face) {
-        return face.getLandmarks().get(6).getPosition().x;
-    }
-    float leftMouthY(Face face) {
-        return face.getLandmarks().get(6).getPosition().y;
-    }
-    float rightMouthX(Face face) {
-        return face.getLandmarks().get(5).getPosition().x;
-    }
-    float rightMouthY(Face face) {
-        return face.getLandmarks().get(5).getPosition().y;
-    }
     float downMouthX(Face face) {
         return face.getLandmarks().get(7).getPosition().x;
     }
     float downMouthY(Face face) {
         return face.getLandmarks().get(7).getPosition().y;
-    }
-    float leftMouthBorder(Face face) {
-        float k = 0.1f;
-        return leftMouthX(face) - k *(rightMouthX(face) - leftMouthX(face));
-    }
-    float MouthWidth(Face face) {
-        float k = 0.1f;
-        return (1 + 2 * k) * (rightMouthX(face) - leftMouthX(face));
-    }
-    float  k3 = 0.15f;
-    float topMouthBorder(Face face) {
-        return eyeHeight(face) + topEyeBorder(face);
-    }
-    float mouthHeight(Face face) {
-        float k = 1f;
-        return k * (downMouthY(face) - leftEyeY(face));
     }
     float leftEyeBorder(Face face) {
         float k = 0.38f;
@@ -256,8 +229,6 @@ public class ModifiedFaceView extends View implements Runnable{
             }
         }*/
 
-
-
         swapPixels(bmp, eyeLeft1, eyeTop1, eyeWidth1, eyeHeight1, eyeLeft2, eyeTop2, eyeWidth2, eyeHeight2);
     }
 
@@ -276,7 +247,7 @@ public class ModifiedFaceView extends View implements Runnable{
         int width2 = points2[0][1] - x2;
         int height2 = points2[1][4] - y2;
 
-        swapPixels(bmp, x1, y1, width1, height1, x2, y2, width2, height2, mask1, mask2);
+        //swapPixels(bmp, x1, y1, width1, height1, x2, y2, width2, height2, mask1, mask2, null, null, 0);
     }
 
     boolean isColorEqual(int color1, int color2, double threshold) {
@@ -293,7 +264,7 @@ public class ModifiedFaceView extends View implements Runnable{
             for (int j = 0; j < height; j++) {
                 int jRef = refY + (j % refHeight);
                 if (!isColorEqual(bmp.getPixel(x + i, y + j), bmp.getPixel(iRef, jRef), threshold)) {
-                    //bmp.setPixel(x + i, y + j, bmp.getPixel(iRef, jRef));
+                    bmp.setPixel(x + i, y + j, bmp.getPixel(iRef, jRef));
                 }
             }
         }
@@ -319,7 +290,7 @@ public class ModifiedFaceView extends View implements Runnable{
         }
     }
 
-    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2, int[][] mask1, int[][] mask2) {
+    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2, float[][] weight1, float[][] weight2, float threshold) {
         Bitmap subBmp1 = Bitmap.createBitmap(bmp, x1, y1, width1, height1);
         subBmp1 = Bitmap.createScaledBitmap(subBmp1, width2, height2, true);
 
@@ -328,17 +299,43 @@ public class ModifiedFaceView extends View implements Runnable{
 
         for (int x = 0; x < width1; x++) {
             for (int y = 0; y < height1; y++) {
-                //if (mask1[x + x1][y + y1] == 1)
                 bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
             }
         }
 
         for (int x = 0; x < width2; x++) {
             for (int y = 0; y < height2; y++) {
-                //if (mask2[x + x2][y + y2] == 1)
                 bmp.setPixel(x + x2, y + y2, subBmp1.getPixel(x, y));
             }
         }
+    }
+
+    void swapPixels(Bitmap bmp, int x1, int y1, int width1, int height1, int x2, int y2, int width2, int height2, int[][] mask1, int[][] mask2, float[][] weight1, float[][] weight2) {
+        Bitmap subBmp1 = Bitmap.createBitmap(bmp, x1, y1, width1, height1);
+        subBmp1 = Bitmap.createScaledBitmap(subBmp1, width2, height2, true);
+
+        Bitmap subBmp2 = Bitmap.createBitmap(bmp, x2, y2, width2, height2);
+        subBmp2 = Bitmap.createScaledBitmap(subBmp2, width1, height1, true);
+
+        for (int x = 0; x < width1; x++) {
+            for (int y = 0; y < height1; y++) {
+                if (mask1[x + x1][y + y1] == 1)
+                    bmp.setPixel(x + x1, y + y1, subBmp2.getPixel(x, y));
+            }
+        }
+
+        for (int x = 0; x < width2; x++) {
+            for (int y = 0; y < height2; y++) {
+                if (mask2[x + x2][y + y2] == 1)
+                    bmp.setPixel(x + x2, y + y2, subBmp1.getPixel(x, y));
+            }
+        }
+    }
+
+    float[][] gauss2d(int width, int height, float sigmaX, float sigmaY) {
+        float[] gaussX = gaussian(width, width / 2, sigmaX);
+        float[] gaussY = gaussian(height, height / 2, sigmaY);
+        return multiplyArrays(gaussX, width, gaussY, height);
     }
 
     void replacePixels(Bitmap bmp, int xSrc, int ySrc, int widthSrc, int heightSrc, int xDes, int yDes, int widthDes, int heightDes, float[][] weightMatrix, float[][] mask, float threshold) {
@@ -349,9 +346,9 @@ public class ModifiedFaceView extends View implements Runnable{
             for (int y = 0; y < heightDes; y++) {
                 int xAbsolute = x + xDes;
                 int yAbsolute = y + yDes;
-                bmp.setPixel(xAbsolute, yAbsolute, subBmp.getPixel(x, y));
+                //bmp.setPixel(xAbsolute, yAbsolute, subBmp.getPixel(x, y));
 
-                /*int color1 = subBmp.getPixel(x, y);
+                int color1 = subBmp.getPixel(x, y);
                 int color2 = bmp.getPixel(xAbsolute, yAbsolute);
 
                 float weight = weightMatrix[x][y] * mask[x][y];
@@ -359,7 +356,7 @@ public class ModifiedFaceView extends View implements Runnable{
                     bmp.setPixel(xDes, yDes, color1);
                 } else {
                     bmp.setPixel(xDes, yDes, combineColors(color1, weight, color2, 1 - weight));
-                }*/
+                }
             }
         }
     }
