@@ -84,7 +84,6 @@ public class FaceSwapActivity extends AppCompatActivity {
     private void selectPicture(int imageRequest){
         Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
         getIntent.setType("image/*");
-
         startActivityForResult(getIntent, imageRequest);
     }
 

@@ -54,45 +54,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void dispatchTakePictureIntent() {
-        /*Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Ensure that there's a camera activity to handle the intent
-        //Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Create the File where the photo should go
-            File photoFile = null;
-            try {
-                photoFile = createImageFile();
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-                Toast.makeText(MainActivity.this, "Error occurred while creating the File",
-                        Toast.LENGTH_SHORT).show();
-            }
-            // Continue only if the File was successfully created
-            if (photoFile != null) {
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
-                        Uri.fromFile(photoFile));
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-
-                Toast toast = Toast.makeText(MainActivity.this, photoFile.toString(),  Toast.LENGTH_SHORT);
-                toast.show();
-            }
-        }*/
         Intent intent = new Intent(this, CameraActivity.class);
         startActivity(intent);
     }
+
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "1mind_" + timeStamp + ".jpg";
         File photo = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ "/faceswap",  imageFileName);
         return photo;
     }
+
     public void selectPicture(View view) {
-        Intent intent = new Intent(this, FaceSwapActivity.class);
-        //maybe record the picture now?
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        Intent intent = new Intent(this, NonTrackingCameraActivity.class);
         startActivity(intent);
+        /*Intent intent = new Intent(this, FaceSwapActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(intent);*/
 
     }
+
     public void sendPicture(View view) {
         Intent intent = new Intent(this, WiFiDirectActivity.class);
 //        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
