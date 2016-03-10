@@ -5,6 +5,8 @@ package com.example.niol.faceswap.livedetect;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.Face;
 import android.hardware.Camera.FaceDetectionListener;
@@ -25,6 +27,7 @@ public class CameraActivity extends Activity
     public static final String TAG = CameraActivity.class.getSimpleName();
 
     private Camera mCamera;
+    private Bitmap mPictureBitmap;
 
     // We need the phone orientation to correctly draw the overlay:
     private int mOrientation;
@@ -54,7 +57,6 @@ public class CameraActivity extends Activity
     private FaceDetectionListener faceDetectionListener = new FaceDetectionListener() {
         @Override
         public void onFaceDetection(Face[] faces, Camera camera) {
-            Log.d("onFaceDetection", "Number of Faces:" + faces.length);
             // Update the view now!
             mFaceView.setFaces(faces);
         }
@@ -97,7 +99,7 @@ public class CameraActivity extends Activity
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         mCamera = Camera.open();
         Camera.Parameters params = mCamera.getParameters();
-        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        setAutoFocus(params);
         mCamera.setParameters(params);
         mCamera.setFaceDetectionListener(faceDetectionListener);
         mCamera.startFaceDetection();
@@ -150,6 +152,7 @@ public class CameraActivity extends Activity
         // Set the PreviewSize and AutoFocus:
         setOptimalPreviewSize(parameters, width, height);
         setAutoFocus(parameters);
+        parameters.set("camera-id", 2);
         // And set the parameters:
         mCamera.setParameters(parameters);
     }
@@ -201,4 +204,21 @@ public class CameraActivity extends Activity
             }
         }
     }
+
+    public Bitmap takePicture() {
+        mCamera.takePicture(null, null, mPicture);
+        return mPictureBitmap;
+    }
+
+    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
+
+        @Override
+        public void onPictureTaken (byte [] data, Camera camera) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inDither = false;
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+            mPictureBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
+        }
+    };
 }
